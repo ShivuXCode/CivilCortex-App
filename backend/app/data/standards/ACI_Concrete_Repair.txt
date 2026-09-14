@@ -1,0 +1,19 @@
+AMERICAN CONCRETE INSTITUTE (ACI)
+ACI 562-16: Code Requirements for Assessment, Repair, and Rehabilitation of Existing Concrete Structures
+
+CHAPTER 7: REPAIR AND REHABILITATION STRATEGIES
+
+7.1 EPOXY INJECTION FOR CRACK REPAIR
+For dormant cracks (cracks that are not actively moving) measuring between 0.002 and 0.25 inches in width, epoxy injection is the prescribed repair method. The epoxy resin restores the monolithic nature of the concrete.
+- Required Materials: Epoxy Resin, Injection Ports, Surface Sealant.
+- Application: Cracks must be cleaned and sealed at the surface before low-pressure injection.
+
+7.2 CARBON FIBER REINFORCED POLYMER (CFRP) REINFORCEMENT
+When concrete elements suffer from severe load-bearing deficiencies, structural concrete reinforcement is required.
+- Action: Concrete Reinforcement using CFRP wraps or laminates bonded with epoxy adhesive.
+- Priority: Immediate if structural capacity is compromised beyond safety factors.
+
+7.3 SURFACE SEALING
+For actively exposed surfaces (pavements, tunnel linings, decks) showing superficial micro-cracking or scaling without exposed reinforcement, surface sealing is mandated to prevent moisture penetration.
+- Required Materials: Polyurethane Sealant or silane-siloxane penetrating sealers.
+- Priority: Routine maintenance.

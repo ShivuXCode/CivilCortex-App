@@ -1,0 +1,42 @@
+{
+    "source_id": "concrete_damage_2750",
+    "image_id": "y2.8171",
+    "image_width": 416,
+    "image_height": 416,
+    "site_id": null,
+    "building_id": null,
+    "inspection_id": null,
+    "acquisition_date": null,
+    "capture_device": null,
+    "original_resolution": null,
+    "preprocessing_history": [],
+    "annotation_version": null,
+    "dataset_version": "1",
+    "license": "CC BY 4.0",
+    "license_status": "UNVERIFIED",
+    "provenance_status": "VALID",
+    "duplicate_group_id": null,
+    "production_training_eligible": false,
+    "quality_status": "PENDING",
+    "calibration": {
+        "is_calibrated": false,
+        "reference_object": null,
+        "pixels_per_mm": null
+    },
+    "defects": [
+        {
+            "defect_instance_id": "UNKNOWN",
+            "defect_type": "crack",
+            "morphology_labels": [],
+            "annotation_type": "BBOX",
+            "original_dataset_label": "parsed_from_xml",
+            "mapping_status": "PARTIAL",
+            "mapping_confidence": "HIGH",
+            "polygon": null,
+            "bounding_box": null,
+            "mask_path": null,
+            "original_annotation_path": "../../Datasets_staging/DAMAGE_DETECTION_2750/2750/annot/y2.8171.xml"
+        }
+    ],
+    "annotation_info": null
+}

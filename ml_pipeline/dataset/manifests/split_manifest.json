@@ -1,0 +1,9 @@
+{
+    "seed": 42,
+    "total_images": 0,
+    "splits": {
+        "train": [],
+        "val": [],
+        "test": []
+    }
+}

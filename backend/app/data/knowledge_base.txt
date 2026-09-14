@@ -1,0 +1,19 @@
+# JT/T 790-2023 TUNNEL MAINTENANCE STANDARD (MOCK EXTRACT)
+
+## Section 4: Structural Cracking
+Clause 4.1.1: For structural cracks less than 2mm in width in the tunnel vault or side walls, the standard maintenance action is Surface Sealing using epoxy resin. 
+Clause 4.1.2: For structural cracks exceeding 2mm in width or cracks showing active water seepage, the required intervention is Concrete Reinforcement and High-Pressure Grouting. Required materials: Epoxy resin grout, carbon fiber sheets.
+
+## Section 5: Foundation Anomalies
+Clause 5.2.1: Minor Foundation Settlement (Severity Level 1 or 2, without structural tilt) requires continuous monitoring and localized crack repair.
+Clause 5.2.2: Deep Foundation Settlement (Severity Level 3 or Priority Immediate) dictates a Foundation Underpinning strategy. This requires immediate stabilization using steel helical piers driven into load-bearing strata, high-strength concrete, and steel bracket assemblies. The minimum crew size for this operation is 6 specialized structural workers. 
+
+## Section 6: Spalling and Delamination
+Clause 6.1.1: Minor spalling (depth < 10mm) requires wire brushing and application of polymer-modified cementitious repair mortar.
+Clause 6.1.2: Deep spalling exposing rebar requires immediate rust removal, application of anti-corrosion primer on exposed steel, and patching with high-strength non-shrink grout.
+
+## Section 7: Water Seepage
+Clause 7.1.1: Active dripping or continuous water seepage in tunnel linings requires immediate diversion and polyurethane chemical grouting to seal the ingress path.
+
+## Section 8: Equipment and Appurtenances
+Clause 8.1.1: Damage to anti-collision kerbstones requires immediate replacement of the damaged section to maintain safety margins for vehicular traffic. Required materials: Precast concrete kerbstones, structural adhesive.

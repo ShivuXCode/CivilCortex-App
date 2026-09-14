@@ -1,0 +1,109 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "CivilCortex Field Collection Schema",
+  "type": "object",
+  "properties": {
+    "source_id": {
+      "type": "string",
+      "description": "Identifier for the acquiring engineer or organization"
+    },
+    "site_id": {
+      "type": "string",
+      "description": "Broad campus or infrastructure complex"
+    },
+    "building_id": {
+      "type": "string",
+      "description": "Specific physical building"
+    },
+    "floor_id": {
+      "type": "string",
+      "description": "Floor index or identifier"
+    },
+    "area_id": {
+      "type": "string",
+      "description": "Room, zone, or specific area"
+    },
+    "structural_element_id": {
+      "type": "string",
+      "description": "Specific element (e.g., Column C-12, Beam B-07)"
+    },
+    "inspection_id": {
+      "type": "string",
+      "description": "Temporal session ID of the overall inspection"
+    },
+    "observation_id": {
+      "type": "string",
+      "description": "ID for the specific temporal observation of a defect"
+    },
+    "image_id": {
+      "type": "string",
+      "description": "Unique identifier for the photographic capture"
+    },
+    "acquisition_date": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "capture_device": {
+      "type": "string"
+    },
+    "device_model": {
+      "type": "string"
+    },
+    "surface_material": {
+      "type": "string",
+      "enum": ["reinforced_concrete", "plain_concrete", "plaster", "masonry", "painted", "exposed_concrete", "repaired", "UNKNOWN"]
+    },
+    "environment": {
+      "type": "string",
+      "enum": ["indoor", "outdoor", "UNKNOWN"]
+    },
+    "lighting": {
+      "type": "string",
+      "enum": ["daylight", "artificial", "low_light", "mixed", "UNKNOWN"]
+    },
+    "calibration": {
+      "type": "object",
+      "properties": {
+        "status": {
+          "type": "string",
+          "enum": ["PHYSICAL_CALIBRATED", "PIXEL_ONLY", "ESTIMATED", "UNAVAILABLE"]
+        },
+        "reference": {
+          "type": "string"
+        },
+        "pixels_per_mm": {
+          "type": "number"
+        }
+      },
+      "required": ["status"]
+    },
+    "defects": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "defect_instance_id": {
+            "type": "string",
+            "description": "Persistent physical identity of the crack/defect"
+          },
+          "defect_type": {
+            "type": "string",
+            "enum": ["crack", "spalling", "efflorescence", "normal", "hard_negative"]
+          },
+          "morphology_tags": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "enum": ["horizontal", "vertical", "diagonal", "branching", "irregular"]
+            }
+          }
+        },
+        "required": ["defect_instance_id", "defect_type"]
+      }
+    }
+  },
+  "required": [
+    "source_id", "site_id", "building_id", "floor_id", "area_id", 
+    "structural_element_id", "inspection_id", "observation_id", "image_id"
+  ]
+}

@@ -1,0 +1,46 @@
+{
+    "train_target_pct": 70,
+    "val_target_pct": 15,
+    "test_target_pct": 15,
+    "actual_train_count": 77889,
+    "actual_val_count": 16962,
+    "actual_test_count": 20332,
+    "datasets": {
+        "SDNET2018": {
+            "group_aware": true,
+            "train": 36527,
+            "val": 8099,
+            "test": 11466
+        },
+        "CCIC": {
+            "group_aware": false,
+            "train": 28000,
+            "val": 6000,
+            "test": 6000
+        },
+        "RC_SEGMENTATION_1841": {
+            "group_aware": false,
+            "train": 1288,
+            "val": 276,
+            "test": 277
+        },
+        "DAMAGE_DETECTION_2750": {
+            "group_aware": false,
+            "train": 1924,
+            "val": 412,
+            "test": 414
+        },
+        "MDMCS": {
+            "group_aware": false,
+            "train": 1750,
+            "val": 375,
+            "test": 375
+        },
+        "CICS": {
+            "group_aware": false,
+            "train": 8400,
+            "val": 1800,
+            "test": 1800
+        }
+    }
+}

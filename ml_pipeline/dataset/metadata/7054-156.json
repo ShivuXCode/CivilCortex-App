@@ -1,0 +1,28 @@
+{
+    "source_id": "sdnet2018",
+    "image_id": "7054-156",
+    "image_width": 256,
+    "image_height": 256,
+    "site_id": null,
+    "building_id": null,
+    "inspection_id": null,
+    "acquisition_date": null,
+    "capture_device": null,
+    "original_resolution": null,
+    "preprocessing_history": [],
+    "annotation_version": null,
+    "dataset_version": "1.0",
+    "license": "CC BY 4.0",
+    "license_status": "UNVERIFIED",
+    "provenance_status": "VALID",
+    "duplicate_group_id": null,
+    "production_training_eligible": true,
+    "quality_status": "PENDING",
+    "calibration": {
+        "is_calibrated": false,
+        "reference_object": null,
+        "pixels_per_mm": null
+    },
+    "defects": [],
+    "annotation_info": null
+}

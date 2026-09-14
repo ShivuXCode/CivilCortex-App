@@ -1,0 +1,92 @@
+{
+    "image_count_reconciliation": {
+        "previous_count": 113883,
+        "phase8_count": 115183,
+        "difference": 1300,
+        "reconciled_count": 113883,
+        "reason": "The Phase 8 duplicate analysis naively globbed all *.jpg and *.png files in the Datasets directory. In the MDMCS dataset, 1,200 segmentation masks (*.png) and 100 mark_color images were incorrectly counted as source images. The previous Phase 7D count of 113,883 is correct."
+    },
+    "exact_duplicate_reconciliation": {
+        "previous_within": 8464,
+        "phase8_within": 12665,
+        "previous_cross": 651,
+        "phase8_cross": 1090,
+        "reconciled_definition": "Duplicate occurrences excluding the canonical copy (i.e., N-1 per cluster).",
+        "reason": "The Phase 8 calculation included 1,300 masks as images. Many completely blank/black binary masks hashed identically, artificially inflating the exact duplicate count by thousands. The exact duplicate calculation must exclude annotation files."
+    },
+    "near_duplicate_reconciliation": {
+        "total_clusters": 8955,
+        "exact_duplicate_clusters": 6273,
+        "near_duplicate_only_clusters": 2682,
+        "phash_threshold": 12,
+        "reason_for_threshold": "Threshold 0=exact, <=4=minor compression difference, <=8=likely same physical scene (different crop), <=12=possible same physical defect/texture requiring human review."
+    },
+    "dataset_specific_license_audit": {
+        "SDNET2018": {
+            "license": "UNKNOWN",
+            "evidence": "digitalcommons.usu.edu (No explicit license file)",
+            "commercial_use": "UNKNOWN",
+            "attribution_required": "UNKNOWN",
+            "production_eligibility": "BLOCKED / UNVERIFIED"
+        },
+        "CCIC": {
+            "license": "CC-BY 4.0",
+            "evidence": "Mendeley Data license declaration",
+            "commercial_use": "ALLOWED",
+            "attribution_required": "REQUIRED",
+            "production_eligibility": "ELIGIBLE (CONDITIONAL)"
+        },
+        "RC1841": {
+            "license": "UNKNOWN",
+            "evidence": "Mendeley repository default (Unverified dataset-specific license)",
+            "commercial_use": "UNKNOWN",
+            "attribution_required": "UNKNOWN",
+            "production_eligibility": "BLOCKED / UNVERIFIED"
+        },
+        "DamageDetection": {
+            "license": "UNKNOWN",
+            "evidence": "Mendeley repository default (Unverified)",
+            "commercial_use": "UNKNOWN",
+            "attribution_required": "UNKNOWN",
+            "production_eligibility": "BLOCKED / UNVERIFIED"
+        },
+        "MDMCS": {
+            "license": "UNKNOWN",
+            "evidence": "Mendeley repository default (Unverified)",
+            "commercial_use": "UNKNOWN",
+            "attribution_required": "UNKNOWN",
+            "production_eligibility": "BLOCKED / UNVERIFIED"
+        },
+        "CICS": {
+            "license": "UNKNOWN",
+            "evidence": "Mendeley repository default (Unverified)",
+            "commercial_use": "UNKNOWN",
+            "attribution_required": "UNKNOWN",
+            "production_eligibility": "BLOCKED / UNVERIFIED"
+        }
+    },
+    "annotation_count_reconciliation": {
+        "total_unique_images": 113883,
+        "unique_classification_only_images": 108092,
+        "unique_bbox_images": 2750,
+        "unique_mask_images": 3041,
+        "unique_polygon_images": 0,
+        "unique_physical_defect_instances": "NOT DETERMINABLE FROM SOURCE ANNOTATIONS",
+        "reason": "IMAGE COUNT \u2260 ANNOTATION COUNT \u2260 PHYSICAL DEFECT INSTANCE COUNT. The source formats (binary masks, simple bboxes) do not guarantee that one image corresponds to one real-world physical instance. The number of actual physical defects is not determinable."
+    },
+    "defect_coverage_reconciliation": {
+        "crack_spatially_annotated_images": 5791,
+        "spalling_spatially_annotated_images": 0,
+        "efflorescence_spatially_annotated_images": 0,
+        "crack_physical_instances": "NOT DETERMINABLE FROM SOURCE ANNOTATIONS"
+    },
+    "morphology_reconciliation": {
+        "horizontal": "UNSUPPORTED",
+        "vertical": "UNSUPPORTED",
+        "diagonal": "UNSUPPORTED",
+        "branching": "UNSUPPORTED",
+        "irregular": "UNSUPPORTED",
+        "reason": "Visual appearance alone does not constitute annotation support. None of the 6 datasets provide explicit morphology bounding boxes, masks, or multi-label classification for crack direction/shape."
+    },
+    "final_verdict": "NOT READY \u2014 DATASET BLOCKERS REMAIN"
+}

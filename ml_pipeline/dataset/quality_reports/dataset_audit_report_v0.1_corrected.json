@@ -1,0 +1,198 @@
+{
+    "datasets_discovered": [
+        "SDNET2018",
+        "Concrete Crack Images for Classification",
+        "Reinforced concrete structure segmentation dataset 1841",
+        "Damage Detection Dataset for Concrete Structures with Multi-Feature Backgrounds",
+        "Multi-Damage Monitoring of Concrete Structures",
+        "Cracks In Concrete Structures"
+    ],
+    "datasets_ingested": [
+        "SDNET2018",
+        "Concrete Crack Images for Classification",
+        "Reinforced concrete structure segmentation dataset 1841",
+        "Damage Detection Dataset for Concrete Structures with Multi-Feature Backgrounds",
+        "Multi-Damage Monitoring of Concrete Structures",
+        "Cracks In Concrete Structures"
+    ],
+    "datasets_partial_failed": [],
+    "image_counts": {
+        "total_raw_image_count": 113883,
+        "total_valid_image_count": 113883,
+        "classification_labeled_image_count": 108092,
+        "bbox_annotated_image_count": 2750,
+        "mask_annotated_image_count": 3041,
+        "polygon_annotated_image_count": 0,
+        "images_with_any_annotation": 113883,
+        "images_without_annotation": 0,
+        "malformed_annotation_count": 0
+    },
+    "dataset_annotation_breakdown": [
+        {
+            "dataset": "SDNET2018",
+            "total": 56092,
+            "classification": 56092,
+            "bbox": 0,
+            "mask": 0,
+            "polygon": 0,
+            "other": 0,
+            "none": 0,
+            "malformed": 0
+        },
+        {
+            "dataset": "Concrete Crack Images for Classification",
+            "total": 40000,
+            "classification": 40000,
+            "bbox": 0,
+            "mask": 0,
+            "polygon": 0,
+            "other": 0,
+            "none": 0,
+            "malformed": 0
+        },
+        {
+            "dataset": "Reinforced concrete structure segmentation dataset 1841",
+            "total": 1841,
+            "classification": 0,
+            "bbox": 0,
+            "mask": 1841,
+            "polygon": 0,
+            "other": 0,
+            "none": 0,
+            "malformed": 0
+        },
+        {
+            "dataset": "Damage Detection Dataset for Concrete Structures with Multi-Feature Backgrounds",
+            "total": 2750,
+            "classification": 0,
+            "bbox": 2750,
+            "mask": 0,
+            "polygon": 0,
+            "other": 0,
+            "none": 0,
+            "malformed": 0
+        },
+        {
+            "dataset": "Multi-Damage Monitoring of Concrete Structures",
+            "total": 1200,
+            "classification": 0,
+            "bbox": 0,
+            "mask": 1200,
+            "polygon": 0,
+            "other": 0,
+            "none": 0,
+            "malformed": 0
+        },
+        {
+            "dataset": "Cracks In Concrete Structures",
+            "total": 12000,
+            "classification": 12000,
+            "bbox": 0,
+            "mask": 0,
+            "polygon": 0,
+            "other": 0,
+            "none": 0,
+            "malformed": 0
+        }
+    ],
+    "duplicate_analysis": {
+        "exact_duplicates_within_dataset": 8464,
+        "exact_duplicates_across_datasets": 651,
+        "near_duplicates_within_dataset": "NOT_RUN",
+        "near_duplicates_across_datasets": "NOT_RUN",
+        "source_derived_relationships": "UNAVAILABLE",
+        "uncertain_overlap_groups": "NOT_RUN"
+    },
+    "ccic_source_mapping": {
+        "source_mapping_status": "UNAVAILABLE",
+        "source_image_count": 458,
+        "note": "CCIC filenames and folder structure prevent deterministic mapping back to the known 458 source images."
+    },
+    "license_reporting": [
+        {
+            "dataset": "SDNET2018",
+            "authoritative_source": "https://digitalcommons.usu.edu/all_datasets/48/",
+            "version": "1.0",
+            "license": "CC BY 4.0",
+            "license_verification_status": "UNVERIFIED",
+            "commercial_use_status": "UNKNOWN",
+            "production_training_eligible": false
+        },
+        {
+            "dataset": "Concrete Crack Images for Classification",
+            "authoritative_source": "https://data.mendeley.com/datasets/5y9wdsg2zt/1",
+            "version": "1",
+            "license": "CC BY 4.0",
+            "license_verification_status": "VERIFIED",
+            "commercial_use_status": "ALLOWED",
+            "production_training_eligible": false
+        },
+        {
+            "dataset": "Reinforced concrete structure segmentation dataset 1841",
+            "authoritative_source": "https://data.mendeley.com/datasets/yfhwfcrfmk/1",
+            "version": "1",
+            "license": "CC BY 4.0",
+            "license_verification_status": "UNVERIFIED",
+            "commercial_use_status": "UNKNOWN",
+            "production_training_eligible": false
+        },
+        {
+            "dataset": "Damage Detection Dataset for Concrete Structures with Multi-Feature Backgrounds",
+            "authoritative_source": "https://data.mendeley.com/datasets/9t3y6hhddk/1",
+            "version": "1",
+            "license": "CC BY 4.0",
+            "license_verification_status": "UNVERIFIED",
+            "commercial_use_status": "UNKNOWN",
+            "production_training_eligible": false
+        },
+        {
+            "dataset": "Multi-Damage Monitoring of Concrete Structures",
+            "authoritative_source": "https://data.mendeley.com/datasets/6x4dzzrs2h/2",
+            "version": "2",
+            "license": "CC BY 4.0",
+            "license_verification_status": "UNVERIFIED",
+            "commercial_use_status": "UNKNOWN",
+            "production_training_eligible": false
+        },
+        {
+            "dataset": "Cracks In Concrete Structures",
+            "authoritative_source": "https://data.mendeley.com/datasets/9brnm3c39k/1",
+            "version": "1",
+            "license": "CC BY 4.0",
+            "license_verification_status": "UNVERIFIED",
+            "commercial_use_status": "UNKNOWN",
+            "production_training_eligible": false
+        }
+    ],
+    "taxonomy_coverage": {
+        "crack": 108092,
+        "spalling": "UNMAPPED",
+        "efflorescence": 0,
+        "corrosion": "UNMAPPED",
+        "exposed_rebar": "UNMAPPED",
+        "crushing": "UNMAPPED",
+        "deformation": "UNMAPPED",
+        "surface_deterioration": "UNMAPPED"
+    },
+    "spalling_matrix": {
+        "dataset_contains_spalling_images": true,
+        "dataset_has_spalling_classification_labels": false,
+        "dataset_has_spalling_bounding_boxes": true,
+        "dataset_has_spalling_masks": true,
+        "dataset_has_validated_instance_level_spalling_annotations": false
+    },
+    "efflorescence_coverage": {
+        "efflorescence_source_coverage": 0,
+        "efflorescence_production_readiness": "FAIL"
+    },
+    "calibration": "UNAVAILABLE",
+    "hierarchy": {
+        "public_dataset_hierarchy_coverage": "LIMITED / FAIL"
+    },
+    "longitudinal_monitoring": "FAIL",
+    "pytest_status": {
+        "pytest_status": "NOT_EXECUTED",
+        "reason": "pytest executable/dependency unavailable. The system prohibits automated installation of Python packages, and no existing virtual environment containing pytest (.venv, pip, poetry, uv, etc.) was found."
+    },
+    "dataset_acceptance_status": "FAIL / BLOCKED"
+}

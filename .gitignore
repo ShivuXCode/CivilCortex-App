@@ -1,0 +1,68 @@
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# C extensions
+*.so
+
+# Environments
+.env
+.venv
+env/
+venv/
+ENV/
+env.bak/
+venv.bak/
+
+# Datasets and Media
+Datasets/
+Datasets_staging/
+Test Images/
+*.jpg
+*.png
+*.webp
+*.mp4
+archive_checksums.txt
+
+# ML Checkpoints and runs
+ml_pipeline/models/
+ml_pipeline/runs/
+ml_pipeline/logs/
+ml_pipeline/experiments/
+*.pth
+*.pt
+*.onnx
+
+# Database and Storage
+civilcortex.db
+storage/
+*.sqlite3
+
+# Frontend
+frontend/node_modules/
+frontend/dist/
+frontend/dist-ssr/
+frontend/.eslintcache
+frontend/coverage/
+
+# OS generated files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# Logs and databases
+*.log
+*.sql
+*.sqlite
+
+# Testing
+.pytest_cache/
+coverage.xml
+*.cover
+.coverage
+htmlcov/

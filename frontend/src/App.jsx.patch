@@ -1,0 +1,273 @@
+--- frontend/src/App.jsx
++++ frontend/src/App.jsx
+@@ -7,7 +7,7 @@
+ import TelemetryPanel from './components/TelemetryPanel';
+ import Auth from './components/Auth';
+ import SettingsView from './components/SettingsView';
+-import { Activity, FolderGit2, Plus, Settings, Moon, Sun, Pencil, Trash2, Share, PenLine, Pin, LogOut } from 'lucide-react';
++import { Activity, FolderGit2, Plus, Settings, Moon, Sun, Pencil, Trash2, Share, PenLine, Pin, LogOut, Search, PanelLeftClose, PanelLeft, Edit, Image as ImageIcon, Library, Clock, Puzzle, Folder, Cpu, MoreHorizontal, User } from 'lucide-react';
+ 
+ // Configure Axios Interceptor to attach JWT token
+ axios.interceptors.request.use((config) => {
+@@ -32,6 +32,23 @@
+   return token ? children : <Navigate to="/login" replace />;
+ };
+ 
++const parseJwt = (token) => {
++  try {
++    return JSON.parse(atob(token.split('.')[1]));
++  } catch (e) {
++    return null;
++  }
++};
++
+ function Dashboard({ theme, toggleTheme }) {
+   const [analysisResult, setAnalysisResult] = useState(null);
+   const [isSettingsOpen, setIsSettingsOpen] = useState(() => localStorage.getItem('isSettingsOpen') === 'true');
+@@ -43,6 +60,13 @@
+   const [archivedChatIds, setArchivedChatIds] = useState(() => JSON.parse(localStorage.getItem('archivedChatIds') || '[]'));
+   const [toast, setToast] = useState(null);
+ 
++  // New sidebar states
++  const [isSidebarOpen, setIsSidebarOpen] = useState(true);
++  const [searchQuery, setSearchQuery] = useState('');
++  const [isSearchActive, setIsSearchActive] = useState(false);
++  const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
++  const tokenData = parseJwt(localStorage.getItem('token') || '');
++  const username = tokenData?.sub || 'User';
++
+   const showToast = (msg) => {
+     setToast(msg);
+     setTimeout(() => setToast(null), 3000);
+@@ -140,49 +164,151 @@
+   };
+ 
+   return (
+-    <div className="app-container">
++    <div className="app-container" style={{ display: 'flex', height: '100vh', overflow: 'hidden' }}>
+       {/* Left Sidebar - Projects */}
+-      <aside className="sidebar" style={{ position: 'relative', background: 'var(--bg-sidebar)', borderRight: '1px solid var(--border-color)' }}>
+-        <div style={{ marginBottom: '1.5rem' }}>
+-          <div style={{ display: 'flex', alignItems: 'center', background: 'var(--bg-color)', border: '1px solid var(--border-color)', borderRadius: '12px', padding: '0.4rem 0.6rem', color: 'var(--text-muted)', fontSize: '0.85rem' }}>
+-            Search
+-          </div>
+-        </div>
+-        
+-        <button 
+-          onClick={createNewChat}
+-          style={{ width: '100%', padding: '0.6rem 0.8rem', background: 'transparent', border: 'none', color: 'var(--text-main)', display: 'flex', alignItems: 'center', gap: '10px', cursor: 'pointer', marginBottom: '1.5rem', fontWeight: '500', borderRadius: '12px', textAlign: 'left' }}
+-        >
+-          <div style={{ background: 'var(--text-main)', color: 'var(--bg-color)', borderRadius: '50%', width: '24px', height: '24px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+-            <Plus size={16} />
+-          </div>
+-          New Chat
+-        </button>
+-
+-        <h3 style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginBottom: '0.5rem', fontWeight: '600', paddingLeft: '0.5rem' }}>
+-          Recents
+-        </h3>
+-        
+-        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.1rem', overflowY: 'auto', flex: 1, paddingBottom: '60px' }}>
+-          {chats
+-            .filter(chat => !archivedChatIds.includes(chat.id))
+-            .sort((a, b) => {
+-              const aPinned = pinnedChatIds.includes(a.id);
+-              const bPinned = pinnedChatIds.includes(b.id);
+-              if (aPinned && !bPinned) return -1;
+-              if (!aPinned && bPinned) return 1;
+-              return 0;
+-            })
+-            .map(chat => (
+-            <div 
+-              key={chat.id}
+-              onClick={() => handleSelectChat(chat)}
+-              onContextMenu={(e) => {
+-                e.preventDefault();
+-                setContextMenu({ x: e.clientX, y: e.clientY, chat });
++      <aside 
++        className="sidebar" 
++        style={{ 
++          position: 'relative', 
++          background: '#000000', 
++          color: '#ffffff',
++          width: isSidebarOpen ? '260px' : '0px',
++          transition: 'width 0.3s ease',
++          overflow: 'hidden',
++          display: 'flex',
++          flexDirection: 'column',
++          borderRight: 'none'
++        }}
++      >
++        <div style={{ width: '260px', display: 'flex', flexDirection: 'column', height: '100%' }}>
++          {/* Sidebar Header */}
++          <div style={{ padding: '1rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
++            <div style={{ fontWeight: '600', fontSize: '1.1rem', display: 'flex', alignItems: 'center', gap: '8px' }}>
++              CivilCortex
++            </div>
++            <div style={{ display: 'flex', gap: '12px', color: '#9ca3af' }}>
++              <Search 
++                size={18} 
++                style={{ cursor: 'pointer' }} 
++                onClick={() => { setIsSearchActive(!isSearchActive); if (isSearchActive) setSearchQuery(''); }}
++              />
++              <PanelLeftClose size={18} style={{ cursor: 'pointer' }} onClick={() => setIsSidebarOpen(false)} />
++            </div>
++          </div>
++
++          {/* Search Bar */}
++          {isSearchActive && (
++            <div style={{ padding: '0 1rem 1rem 1rem' }}>
++              <input 
++                type="text" 
++                placeholder="Search chats..." 
++                value={searchQuery}
++                onChange={(e) => setSearchQuery(e.target.value)}
++                style={{ width: '100%', padding: '0.5rem', borderRadius: '6px', border: '1px solid #374151', background: '#1f2937', color: '#fff', outline: 'none' }}
++              />
++            </div>
++          )}
++
++          {/* New Chat Button */}
++          <div style={{ padding: '0 1rem' }}>
++            <button 
++              onClick={createNewChat}
++              style={{ width: '100%', padding: '0.6rem 0.8rem', background: '#1f2937', border: 'none', color: '#ffffff', display: 'flex', alignItems: 'center', justifyContent: 'space-between', cursor: 'pointer', borderRadius: '8px', fontSize: '0.9rem' }}
++            >
++              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
++                <Edit size={16} /> New chat
++              </div>
++            </button>
++          </div>
++
++          {/* Dummy links for ChatGPT feel */}
++          <div style={{ padding: '1rem', display: 'flex', flexDirection: 'column', gap: '0.8rem', color: '#e5e7eb', fontSize: '0.9rem' }}>
++            <div style={{ display: 'flex', alignItems: 'center', gap: '10px', cursor: 'pointer' }}><ImageIcon size={18} /> Images</div>
++            <div style={{ display: 'flex', alignItems: 'center', gap: '10px', cursor: 'pointer' }}><Library size={18} /> Library</div>
++            <div style={{ display: 'flex', alignItems: 'center', gap: '10px', cursor: 'pointer' }}><Clock size={18} /> Scheduled</div>
++            <div style={{ display: 'flex', alignItems: 'center', gap: '10px', cursor: 'pointer' }}><Puzzle size={18} /> Plugins</div>
++            <div style={{ display: 'flex', alignItems: 'center', gap: '10px', cursor: 'pointer' }}><Folder size={18} /> Projects</div>
++            <div style={{ display: 'flex', alignItems: 'center', gap: '10px', cursor: 'pointer' }}><Cpu size={18} /> Codex</div>
++            <div style={{ display: 'flex', alignItems: 'center', gap: '10px', cursor: 'pointer' }}><MoreHorizontal size={18} /> More</div>
++          </div>
++
++          <h3 style={{ fontSize: '0.75rem', color: '#9ca3af', marginTop: '1rem', marginBottom: '0.5rem', fontWeight: '500', paddingLeft: '1rem' }}>
++            Recents
++          </h3>
++          
++          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.2rem', overflowY: 'auto', flex: 1, padding: '0 0.5rem 20px 0.5rem' }}>
++            {chats
++              .filter(chat => !archivedChatIds.includes(chat.id))
++              .filter(chat => chat.title.toLowerCase().includes(searchQuery.toLowerCase()))
++              .sort((a, b) => {
++                const aPinned = pinnedChatIds.includes(a.id);
++                const bPinned = pinnedChatIds.includes(b.id);
++                if (aPinned && !bPinned) return -1;
++                if (!aPinned && bPinned) return 1;
++                return 0;
+               }}
+-              style={{ 
+-                padding: '0.5rem 0.8rem', 
+-                background: activeChatId === chat.id ? 'var(--border-color)' : 'transparent', 
+-                borderRadius: '12px', 
+-                cursor: 'pointer', 
+-                display: 'flex', 
+-                alignItems: 'center', 
+-                gap: '10px',
+-                color: 'var(--text-main)'
+-              }}
+-            >
+-              <span style={{ fontSize: '0.85rem', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', flex: 1 }}>{chat.title}</span>
+-              {pinnedChatIds.includes(chat.id) && <Pin size={12} color="var(--text-muted)" style={{ transform: 'rotate(45deg)' }} />}
+-            </div>
+-          ))}
+-        </div>
+-
+-        <div style={{ position: 'absolute', bottom: '1rem', left: '1rem', right: '1rem', display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+-          <button 
+-            onClick={() => setIsSettingsOpen(true)}
+-            style={{ width: '100%', padding: '0.6rem', background: 'transparent', border: 'none', borderRadius: '12px', color: 'var(--text-main)', display: 'flex', alignItems: 'center', gap: '10px', cursor: 'pointer' }}
+-          >
+-            <div style={{ background: 'var(--border-color)', borderRadius: '50%', width: '28px', height: '28px', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.75rem', fontWeight: 'bold' }}>
+-              SM
+-            </div>
+-            Settings
+-          </button>
+-          <button 
+-            onClick={() => {
+-              localStorage.removeItem('token');
+-              window.location.href = '/login';
+-            }}
+-            style={{ width: '100%', padding: '0.6rem', background: 'transparent', border: 'none', borderRadius: '12px', color: '#ef4444', display: 'flex', alignItems: 'center', gap: '10px', cursor: 'pointer' }}
+-          >
+-            <LogOut size={20} />
+-            Log Out
+-          </button>
++              .map(chat => (
++              <div 
++                key={chat.id}
++                onClick={() => handleSelectChat(chat)}
++                onContextMenu={(e) => {
++                  e.preventDefault();
++                  setContextMenu({ x: e.clientX, y: e.clientY, chat });
++                }}
++                style={{ 
++                  padding: '0.5rem', 
++                  background: activeChatId === chat.id ? '#1f2937' : 'transparent', 
++                  borderRadius: '8px', 
++                  cursor: 'pointer', 
++                  display: 'flex', 
++                  alignItems: 'center', 
++                  color: '#e5e7eb'
++                }}
++              >
++                <span style={{ fontSize: '0.85rem', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', flex: 1 }}>{chat.title}</span>
++                {pinnedChatIds.includes(chat.id) && <Pin size={12} color="#9ca3af" style={{ transform: 'rotate(45deg)' }} />}
++              </div>
++            ))}
++          </div>
++
++          {/* User Profile Button */}
++          <div style={{ position: 'relative', marginTop: 'auto', padding: '0.5rem' }}>
++            {isUserMenuOpen && (
++              <div style={{ position: 'absolute', bottom: '100%', left: '0.5rem', right: '0.5rem', background: '#1f2937', borderRadius: '8px', padding: '0.5rem', marginBottom: '0.5rem', border: '1px solid #374151', display: 'flex', flexDirection: 'column', gap: '4px' }}>
++                <button onClick={() => { setIsSettingsOpen(true); setIsUserMenuOpen(false); }} style={{ padding: '0.5rem', textAlign: 'left', background: 'transparent', border: 'none', color: '#e5e7eb', cursor: 'pointer', borderRadius: '4px', display: 'flex', alignItems: 'center', gap: '8px' }}>
++                  <Settings size={16} /> Settings
++                </button>
++                <button onClick={() => { localStorage.removeItem('token'); window.location.href = '/login'; }} style={{ padding: '0.5rem', textAlign: 'left', background: 'transparent', border: 'none', color: '#ef4444', cursor: 'pointer', borderRadius: '4px', display: 'flex', alignItems: 'center', gap: '8px' }}>
++                  <LogOut size={16} /> Log out
++                </button>
++              </div>
++            )}
++            
++            <div 
++              onClick={() => setIsUserMenuOpen(!isUserMenuOpen)}
++              style={{ padding: '0.5rem', display: 'flex', alignItems: 'center', justifyContent: 'space-between', cursor: 'pointer', borderRadius: '8px', _hover: { background: '#1f2937' } }}
++            >
++              <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
++                <div style={{ background: '#6b7280', color: '#fff', borderRadius: '50%', width: '32px', height: '32px', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.8rem', fontWeight: 'bold' }}>
++                  {username.substring(0, 2).toUpperCase()}
++                </div>
++                <div style={{ display: 'flex', flexDirection: 'column' }}>
++                  <span style={{ fontSize: '0.9rem', fontWeight: '500', color: '#fff' }}>{username}</span>
++                  <span style={{ fontSize: '0.75rem', color: '#9ca3af' }}>Free</span>
++                </div>
++              </div>
++              <button style={{ background: '#374151', border: 'none', color: '#fff', padding: '0.3rem 0.6rem', borderRadius: '16px', fontSize: '0.75rem', cursor: 'pointer' }}>
++                Upgrade
++              </button>
++            </div>
++          </div>
+         </div>
+       </aside>
+ 
+       {/* Center Panel - Chat Console or Settings */}
+-      <main className="main-content" style={{ padding: 0, overflow: 'hidden', background: 'var(--bg-color)', position: 'relative', borderTopLeftRadius: '16px', borderBottomLeftRadius: '16px' }}>
++      <main className="main-content" style={{ padding: 0, overflow: 'hidden', background: 'var(--bg-color)', position: 'relative', flex: 1 }}>
+         {!isSettingsOpen && (
+           <div style={{ position: 'absolute', top: 0, left: 0, right: 0, padding: '1rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+-            <div style={{ fontWeight: '600', color: 'var(--text-muted)', display: 'flex', alignItems: 'center', gap: '4px', cursor: 'pointer' }}>
++            <div style={{ fontWeight: '600', color: 'var(--text-muted)', display: 'flex', alignItems: 'center', gap: '4px', cursor: 'pointer' }} onClick={() => setIsSidebarOpen(true)}>
++              {!isSidebarOpen && <PanelLeft size={20} style={{ marginRight: '8px' }} />}
+               CivilCortex <span style={{ fontSize: '0.8rem' }}>›</span>
+             </div>
+             <div style={{ display: 'flex', gap: '1rem', color: 'var(--text-muted)' }}>

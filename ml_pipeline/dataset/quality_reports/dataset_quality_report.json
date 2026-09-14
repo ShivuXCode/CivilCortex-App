@@ -1,0 +1,13 @@
+{
+    "total_images": 0,
+    "total_defect_instances": 0,
+    "defect_type_distribution": {},
+    "morphology_distribution": {},
+    "image_resolution_distribution": {},
+    "quality_failures": 0,
+    "calibration_availability": {
+        "calibrated": 0,
+        "uncalibrated": 0
+    },
+    "unique_sites_count": 0
+}

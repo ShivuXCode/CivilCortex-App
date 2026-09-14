@@ -1,0 +1,76 @@
+{
+    "dataset_quality_matrix": {
+        "SDNET2018": {
+            "Annotation quality": "Medium (Classification only, some false positives)",
+            "Class coverage": "Medium (Crack only)",
+            "Spatial annotation quality": "Fail (None)",
+            "Diversity": "High (Multiple bridge decks)",
+            "Hard negatives": "High (Walls with construction joints)",
+            "Metadata richness": "Low (No physics, no sensor data)",
+            "Grouping availability": "High (Bridge ID in filename)",
+            "Leakage risk": "Low (If grouped by Bridge ID)",
+            "License certainty": "High (CC-BY 4.0 verified)",
+            "Production relevance": "High (Good for pretraining classification/hard negatives)"
+        },
+        "CCIC": {
+            "Annotation quality": "High (Classification only)",
+            "Class coverage": "Medium (Crack vs Non-crack)",
+            "Spatial annotation quality": "Fail (None)",
+            "Diversity": "Medium (Concrete surfaces)",
+            "Hard negatives": "Medium",
+            "Metadata richness": "Low",
+            "Grouping availability": "Fail (Shuffled, lost)",
+            "Leakage risk": "High",
+            "License certainty": "High (CC-BY 4.0)",
+            "Production relevance": "Medium (Pretraining only due to leakage risk)"
+        },
+        "RC1841": {
+            "Annotation quality": "High (Masks)",
+            "Class coverage": "Medium (Crack only)",
+            "Spatial annotation quality": "High (Pixel-level segmentation)",
+            "Diversity": "Medium",
+            "Hard negatives": "Low",
+            "Metadata richness": "Low",
+            "Grouping availability": "Fail",
+            "Leakage risk": "High",
+            "License certainty": "Medium",
+            "Production relevance": "High (Good for segmentation model tuning)"
+        },
+        "DamageDetection": {
+            "Annotation quality": "High (Bounding boxes)",
+            "Class coverage": "Medium (Crack only)",
+            "Spatial annotation quality": "Medium (Bboxes)",
+            "Diversity": "High",
+            "Hard negatives": "High",
+            "Metadata richness": "Low",
+            "Grouping availability": "Fail",
+            "Leakage risk": "High",
+            "License certainty": "Medium",
+            "Production relevance": "Medium (Bboxes are less useful than masks for cracks)"
+        },
+        "MDMCS": {
+            "Annotation quality": "High (Masks)",
+            "Class coverage": "Medium (Crack only)",
+            "Spatial annotation quality": "High",
+            "Diversity": "Medium",
+            "Hard negatives": "Medium",
+            "Metadata richness": "Low",
+            "Grouping availability": "Fail",
+            "Leakage risk": "High",
+            "License certainty": "Medium",
+            "Production relevance": "High (Segmentation tuning)"
+        },
+        "CICS": {
+            "Annotation quality": "Medium",
+            "Class coverage": "Medium",
+            "Spatial annotation quality": "Fail (None)",
+            "Diversity": "Low",
+            "Hard negatives": "Low",
+            "Metadata richness": "Low",
+            "Grouping availability": "Fail",
+            "Leakage risk": "High (Redundant with CCIC/SDNET)",
+            "License certainty": "Medium",
+            "Production relevance": "Low (Exclude due to high overlap and no spatial data)"
+        }
+    }
+}

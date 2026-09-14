@@ -1,0 +1,57 @@
+{
+    "datasets_discovered": [
+        "SDNET2018",
+        "Damage Detection Dataset for Concrete Structures with Multi-Feature Backgrounds",
+        "Reinforced concrete structure segmentation dataset 1841",
+        "Multi-Damage Monitoring of Concrete Structures",
+        "Cracks In Concrete Structures",
+        "Concrete Crack Images for Classification"
+    ],
+    "datasets_ingested": [
+        "SDNET2018",
+        "Concrete Crack Images for Classification",
+        "Reinforced concrete structure segmentation dataset 1841",
+        "Damage Detection Dataset for Concrete Structures with Multi-Feature Backgrounds",
+        "Multi-Damage Monitoring of Concrete Structures",
+        "Cracks In Concrete Structures"
+    ],
+    "datasets_partial_failed": [],
+    "total_raw_image_count": 115183,
+    "total_valid_image_count": 115183,
+    "total_annotated_image_count": 115183,
+    "exact_duplicates": 8464,
+    "cross_dataset_overlaps": 651,
+    "license_status": {
+        "SDNET2018": "UNVERIFIED",
+        "Concrete Crack Images for Classification": "VERIFIED",
+        "Reinforced concrete structure segmentation dataset 1841": "UNVERIFIED",
+        "Damage Detection Dataset for Concrete Structures with Multi-Feature Backgrounds": "UNVERIFIED",
+        "Multi-Damage Monitoring of Concrete Structures": "UNVERIFIED",
+        "Cracks In Concrete Structures": "UNVERIFIED"
+    },
+    "taxonomy_coverage": {
+        "sdnet2018": 56092,
+        "mendeley-ccic": 40000,
+        "rc_segmentation_1841": 1841,
+        "concrete_damage_2750": 2750,
+        "mdmcs_v2": 2500,
+        "cics_v1": 12000
+    },
+    "morphology_coverage": {},
+    "spalling_coverage": "FAIL",
+    "efflorescence_coverage": "FAIL",
+    "hard_negative_coverage": "UNKNOWN",
+    "calibration_coverage": "UNAVAILABLE",
+    "source_site_building_coverage": "FAIL",
+    "longitudinal_data_coverage": "FAIL",
+    "leakage_risks": "HIGH (cross-dataset overlaps found)",
+    "production_training_eligibility": "FAIL",
+    "dataset_acceptance_status": "PARTIAL",
+    "human_field_collection_gaps": [
+        "Longitudinal monitoring data",
+        "Building/site generalization",
+        "Calibration measurement support",
+        "Efflorescence and complex spalling geometries"
+    ],
+    "next_recommended_phase": "Model Selection & Benchmark Planning"
+}

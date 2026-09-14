@@ -1,0 +1,65 @@
+{
+  "phase_10c_status": "BLOCKED",
+  "architectures": {
+    "primary_candidate": {
+      "name": "Mask R-CNN or equivalent instance-segmentation architecture",
+      "type": "instance_segmentation",
+      "status": "provisional"
+    },
+    "alternative_candidate": {
+      "name": "Semantic segmentation + deterministic instance separation",
+      "type": "semantic_segmentation_with_postprocessing",
+      "status": "provisional"
+    },
+    "baseline_candidates": {
+      "classification": "ResNet18",
+      "detection": "Faster R-CNN",
+      "segmentation": "FCN-ResNet50",
+      "status": "research_only"
+    },
+    "research_candidate": {
+      "name": "SAM or equivalent promptable segmentation",
+      "purpose": "annotation_assistance",
+      "status": "research_only"
+    }
+  },
+  "physical_identity_tracking": {
+    "cv_model_output": "candidate_visual_defect",
+    "identity_resolution": "contextual_physical_defect_matching",
+    "final_state": "persistent_defect_instance_id",
+    "status": "needs_validation"
+  },
+  "calibration_states": [
+    "PIXEL_ONLY",
+    "PHYSICAL_CALIBRATED",
+    "ESTIMATED",
+    "UNAVAILABLE"
+  ],
+  "production_cv_responsibility": {
+    "allows_visual_evidence_extraction": true,
+    "allows_deterministic_morphology": true,
+    "allows_structural_safety_certification": false,
+    "allows_repair_decision_generation": false
+  },
+  "field_data_readiness_gates": {
+    "status": "blocked",
+    "blocker_reason": "Mathematical contradiction between minimum total target (2,000) and class targets (1,500+800+800 = 3,100 physical instances)",
+    "targets": {
+      "minimum_total_physical_instances": 2000,
+      "class_cracks": 1500,
+      "class_spalling": 800,
+      "class_efflorescence": 800,
+      "hard_negatives": 800
+    }
+  },
+  "public_data_strategy": {
+    "production_pretraining_eligible": ["CCIC"],
+    "research_and_baseline_only": ["SDNET2018", "RC1841", "DAMAGE_DETECTION_2750", "MDMCS"],
+    "excluded": ["CICS"]
+  },
+  "evaluation_framework": {
+    "thin_crack_evaluation": "needs_validation",
+    "longitudinal_matching": "data_gap",
+    "calibration_accuracy": "data_gap"
+  }
+}

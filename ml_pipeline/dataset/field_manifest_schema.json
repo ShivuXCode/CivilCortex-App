@@ -1,0 +1,65 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Field Manifest Schema",
+  "description": "Schema for preserving complete provenance and identity hierarchy for field dataset releases.",
+  "type": "object",
+  "required": [
+    "dataset_version",
+    "schema_version",
+    "manifest_hash",
+    "records"
+  ],
+  "properties": {
+    "dataset_version": { "type": "string" },
+    "schema_version": { "type": "string", "enum": ["v0.1"] },
+    "manifest_hash": { "type": "string" },
+    "records": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": [
+          "source_id", "site_id", "building_id", "floor_id", "area_id", 
+          "structural_element_id", "inspection_id", "observation_id", 
+          "image_id", "checksum", "pHash", "privacy_status", "quality_status",
+          "annotation_status", "provenance_license_status"
+        ],
+        "properties": {
+          "source_id": { "type": "string" },
+          "site_id": { "type": "string" },
+          "building_id": { "type": "string" },
+          "floor_id": { "type": "string" },
+          "area_id": { "type": "string" },
+          "structural_element_id": { "type": "string" },
+          "inspection_id": { "type": "string" },
+          "observation_id": { "type": "string" },
+          "image_id": { "type": "string" },
+          "checksum": { "type": "string" },
+          "pHash": { "type": "string" },
+          "privacy_status": { 
+            "type": "string", 
+            "enum": ["ACCEPT", "REDACT", "REJECT", "PENDING"] 
+          },
+          "quality_status": { "type": "string", "enum": ["PASS", "FAIL", "PENDING"] },
+          "annotation_status": { "type": "string", "enum": ["COMPLETE", "IN_PROGRESS", "NEEDS_REVIEW", "PENDING"] },
+          "calibration_status": { 
+            "type": "string", 
+            "enum": ["PIXEL_ONLY", "PHYSICAL_CALIBRATED", "ESTIMATED", "UNAVAILABLE"] 
+          },
+          "provenance_license_status": { "type": "string" },
+          "annotation_version": { "type": "string" },
+          "defect_instances": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "required": ["defect_instance_id", "defect_type"],
+              "properties": {
+                "defect_instance_id": { "type": "string" },
+                "defect_type": { "type": "string", "enum": ["crack", "spalling", "efflorescence", "hard_negative"] }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}

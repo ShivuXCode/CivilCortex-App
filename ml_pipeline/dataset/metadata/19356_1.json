@@ -1,0 +1,42 @@
+{
+    "source_id": "mendeley-ccic",
+    "image_id": "19356_1",
+    "image_width": 227,
+    "image_height": 227,
+    "site_id": null,
+    "building_id": null,
+    "inspection_id": null,
+    "acquisition_date": null,
+    "capture_device": null,
+    "original_resolution": null,
+    "preprocessing_history": [],
+    "annotation_version": null,
+    "dataset_version": "1",
+    "license": "CC BY 4.0",
+    "license_status": "VERIFIED",
+    "provenance_status": "VALID",
+    "duplicate_group_id": null,
+    "production_training_eligible": true,
+    "quality_status": "PENDING",
+    "calibration": {
+        "is_calibrated": false,
+        "reference_object": null,
+        "pixels_per_mm": null
+    },
+    "defects": [
+        {
+            "defect_instance_id": "UNKNOWN",
+            "defect_type": "crack",
+            "morphology_labels": [],
+            "annotation_type": "CLASSIFICATION",
+            "original_dataset_label": "Positive",
+            "mapping_status": "DIRECT",
+            "mapping_confidence": "HIGH",
+            "polygon": null,
+            "bounding_box": null,
+            "mask_path": null,
+            "original_annotation_path": null
+        }
+    ],
+    "annotation_info": null
+}

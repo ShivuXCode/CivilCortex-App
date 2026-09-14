@@ -1,0 +1,65 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Baseline Experiment Configuration Schema",
+  "type": "object",
+  "properties": {
+    "experiment_id": { "type": "string" },
+    "task": {
+      "type": "string",
+      "enum": ["classification", "detection", "segmentation", "pretraining"]
+    },
+    "datasets": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "dataset_id": { "type": "string" },
+          "dataset_version": { "type": "string" }
+        },
+        "required": ["dataset_id", "dataset_version"]
+      }
+    },
+    "class_mapping": {
+      "type": "object",
+      "additionalProperties": { "type": "integer" }
+    },
+    "input_resolution": {
+      "type": "array",
+      "items": { "type": "integer" },
+      "minItems": 2,
+      "maxItems": 2
+    },
+    "split": {
+      "type": "object",
+      "properties": {
+        "method": { "type": "string", "enum": ["random", "bridge_id", "phash_dedup"] },
+        "train_ratio": { "type": "number" },
+        "val_ratio": { "type": "number" },
+        "test_ratio": { "type": "number" }
+      }
+    },
+    "random_seed": { "type": "integer" },
+    "model_configuration": {
+      "type": "object",
+      "properties": {
+        "architecture_name": { "type": "string" },
+        "pretrained_weights": { "type": "string" }
+      }
+    },
+    "optimizer": { "type": "string" },
+    "learning_rate": { "type": "number" },
+    "batch_size": { "type": "integer" },
+    "epochs": { "type": "integer" },
+    "hardware_device": { "type": "string" },
+    "metrics_tracked": {
+      "type": "array",
+      "items": { "type": "string" }
+    },
+    "checkpoint_dir": { "type": "string" },
+    "code_version": { "type": "string" }
+  },
+  "required": [
+    "experiment_id", "task", "datasets", "class_mapping", "input_resolution",
+    "split", "random_seed", "model_configuration", "metrics_tracked", "checkpoint_dir"
+  ]
+}

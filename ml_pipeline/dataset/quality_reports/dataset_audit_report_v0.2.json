@@ -1,0 +1,58 @@
+{
+    "annotation_audit": {
+        "class_coverage": {
+            "crack": 0,
+            "spalling": 0,
+            "efflorescence": 0
+        },
+        "morphology_coverage": "INSUFFICIENT (None of the 6 public datasets inherently map to branch/diagonal/horizontal instances without custom labeling)",
+        "hard_negative_status": {
+            "evidence": [],
+            "status": "SUFFICIENT_FOR_CLASSIFICATION, INSUFFICIENT_FOR_DETECTION"
+        },
+        "calibration_status": {
+            "physical_measurements_supported": false,
+            "reason": "None of the 6 downloaded datasets contain ruler annotations, known camera parameters, or physical scale references.",
+            "status": "UNAVAILABLE"
+        }
+    },
+    "leakage_analysis": {
+        "source_grouping_availability": {
+            "SDNET2018": "High (Bridge IDs encoded in filenames)",
+            "CCIC": "None (No structure IDs, randomly shuffled)",
+            "RC1841": "None",
+            "DamageDetection": "None",
+            "MDMCS": "None",
+            "CICS": "None"
+        },
+        "leakage_risk": "HIGH",
+        "unresolved_leakage": "Since SDNET2018 is the only dataset with structure-level IDs, building-level generalization CANNOT be verified for the other 5 sources.",
+        "recommended_strategy": "For SDNET2018, group by Bridge ID. For others, split randomly but rely on perceptual hash exact duplicate removal."
+    },
+    "dataset_acceptance_matrix": {
+        "SDNET2018": {
+            "production_eligible": "CONDITIONAL",
+            "reason": "Requires CC-BY 4.0 strict validation, high risk of false positives."
+        },
+        "CCIC": {
+            "production_eligible": "CONDITIONAL",
+            "reason": "Only useful for classification. Leakage risk high."
+        },
+        "RC1841": {
+            "production_eligible": "CONDITIONAL",
+            "reason": "Good for segmentation pretraining."
+        },
+        "DamageDetection": {
+            "production_eligible": "CONDITIONAL",
+            "reason": "Useful for bbox training, limited size."
+        },
+        "MDMCS": {
+            "production_eligible": "CONDITIONAL",
+            "reason": "Useful for segmentation."
+        },
+        "CICS": {
+            "production_eligible": "CONDITIONAL",
+            "reason": "Redundant with SDNET/CCIC if duplicates aren't managed."
+        }
+    }
+}

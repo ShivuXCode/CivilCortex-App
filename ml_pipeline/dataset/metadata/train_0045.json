@@ -1,0 +1,42 @@
+{
+    "source_id": "mdmcs_v2",
+    "image_id": "train_0045",
+    "image_width": 1080,
+    "image_height": 720,
+    "site_id": null,
+    "building_id": null,
+    "inspection_id": null,
+    "acquisition_date": null,
+    "capture_device": null,
+    "original_resolution": null,
+    "preprocessing_history": [],
+    "annotation_version": null,
+    "dataset_version": "2",
+    "license": "CC BY 4.0",
+    "license_status": "UNVERIFIED",
+    "provenance_status": "VALID",
+    "duplicate_group_id": null,
+    "production_training_eligible": false,
+    "quality_status": "PENDING",
+    "calibration": {
+        "is_calibrated": false,
+        "reference_object": null,
+        "pixels_per_mm": null
+    },
+    "defects": [
+        {
+            "defect_instance_id": "UNKNOWN",
+            "defect_type": "unmapped",
+            "morphology_labels": [],
+            "annotation_type": "MASK",
+            "original_dataset_label": "unknown",
+            "mapping_status": "UNMAPPED",
+            "mapping_confidence": "HIGH",
+            "polygon": null,
+            "bounding_box": null,
+            "mask_path": null,
+            "original_annotation_path": null
+        }
+    ],
+    "annotation_info": null
+}

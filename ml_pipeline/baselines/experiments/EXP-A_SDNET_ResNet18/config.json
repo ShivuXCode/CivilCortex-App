@@ -1,0 +1,12 @@
+{
+  "experiment_id": "EXP-A_SDNET_ResNet18",
+  "dataset": "SDNET2018",
+  "task": "classification",
+  "architecture": "resnet18",
+  "seed": 42,
+  "subset_fraction": 0.1,
+  "image_size": 224,
+  "batch_size": 16,
+  "learning_rate": 1e-4,
+  "epochs": 1
+}

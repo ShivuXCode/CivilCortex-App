@@ -1,0 +1,42 @@
+# CivilCortex - Backend Python Dependencies
+# Install via: pip install -r requirements.txt
+
+# --- Core Web Framework & ASGI Server ---
+fastapi>=0.115.0
+uvicorn[standard]>=0.30.0
+pydantic>=2.8.0
+pydantic-settings>=2.4.0
+python-multipart>=0.0.9
+python-dotenv>=1.0.1
+requests>=2.31.0
+
+# --- Database & Authentication ---
+sqlalchemy>=2.0.30
+psycopg2-binary>=2.9.9
+passlib[bcrypt]>=1.7.4
+bcrypt>=4.0.0
+PyJWT>=2.8.0
+
+# --- LangGraph & Multi-Agent Architecture ---
+langgraph>=0.2.0
+langchain-core>=0.3.0
+langchain-community>=0.3.0
+langchain-google-genai>=2.0.0
+langchain-chroma>=0.1.4
+langchain-text-splitters>=0.3.0
+langsmith>=0.1.90
+
+# --- Vector Database & RAG ---
+chromadb>=0.5.0
+
+# --- Deep Learning, Computer Vision & Image Processing ---
+tensorflow>=2.16.0
+keras>=3.0.0
+opencv-python-headless>=4.9.0
+pillow>=10.3.0
+scikit-image>=0.23.0
+numpy>=1.26.0
+scipy>=1.13.0
+
+# --- Document & PDF Generation ---
+fpdf2>=2.7.9

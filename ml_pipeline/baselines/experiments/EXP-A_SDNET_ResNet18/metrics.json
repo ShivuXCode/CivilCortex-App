@@ -1,0 +1,15 @@
+{
+  "experiment_id": "EXP-A_SDNET_ResNet18",
+  "duration_seconds": 74.10157513618469,
+  "manifest_hash": "d9d59a869eb94ecbc47297865326133fc3aa191093224a9d68a05760a8e41eaf",
+  "final_metrics": {
+    "epoch": 0,
+    "train_loss": 0.2964337560351527,
+    "train_acc": 0.8965901493202585,
+    "val_acc": 0.8975044563279857,
+    "val_precision": 0.723404255319149,
+    "val_recall": 0.5730337078651685,
+    "val_f1": 0.6394984326018809
+  },
+  "device_used": "mps"
+}

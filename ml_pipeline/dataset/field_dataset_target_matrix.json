@@ -1,0 +1,42 @@
+{
+  "target_resolution": {
+    "status": "APPROVED",
+    "approved_option": "option_b_3100_total",
+    "options": {
+      "option_b_3100_total": {
+        "minimum_defect_instances": 3100,
+        "defect_type_distribution": {
+          "crack": {"target_pct": 48.38, "minimum_instances": 1500},
+          "spalling": {"target_pct": 25.81, "minimum_instances": 800},
+          "efflorescence": {"target_pct": 25.81, "minimum_instances": 800}
+        }
+      }
+    }
+  },
+  "acceptance_gate": {
+    "minimum_distinct_sites": 10
+  },
+  "recommended_target": {
+    "total_images": 15000,
+    "distinct_sites": 20
+  },
+  "hard_negative_target": {
+    "target_pct": 20,
+    "minimum_instances": 800
+  },
+  "morphology_distribution": {
+    "horizontal": {"target_pct": 20},
+    "vertical": {"target_pct": 20},
+    "diagonal": {"target_pct": 20},
+    "branching": {"target_pct": 20},
+    "irregular": {"target_pct": 20}
+  },
+  "calibration_target": {
+    "calibrated": {"target_pct": 40},
+    "uncalibrated": {"target_pct": 60}
+  },
+  "longitudinal_target": {
+    "minimum_repeat_observations": 500,
+    "minimum_time_delta_days": 30
+  }
+}
