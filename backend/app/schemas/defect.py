@@ -1,4 +1,4 @@
-from pydantic import BaseModel
+from pydantic import BaseModel, ConfigDict
 from typing import List, Optional
 from datetime import datetime
 
@@ -11,12 +11,11 @@ class DefectCreate(DefectBase):
 
 class DefectResponse(DefectBase):
     id: str
-    structural_element_id: str
+    structural_element_id: Optional[str] = None
     created_at: datetime
     updated_at: datetime
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 class DefectUpdate(BaseModel):
     status: str
@@ -29,14 +28,18 @@ class AssessmentBase(BaseModel):
 class AssessmentCreate(AssessmentBase):
     pass
 
+class AssessmentUpdate(BaseModel):
+    severity: Optional[str] = None
+    risk: Optional[str] = None
+    repair_recommendation: Optional[str] = None
+
 class AssessmentResponse(AssessmentBase):
     id: str
     observation_id: str
     created_at: datetime
     updated_at: datetime
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 class CrackObservationBase(BaseModel):
     pass
@@ -54,5 +57,9 @@ class CrackObservationResponse(CrackObservationBase):
     created_at: datetime
     assessment: Optional[AssessmentResponse] = None
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
+
+class ReportResponse(BaseModel):
+    content: str
+    generated_at: datetime
+    status: str

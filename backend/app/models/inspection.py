@@ -26,7 +26,7 @@ class InspectionImage(Base):
     __tablename__ = "inspection_images"
     id = Column(String, primary_key=True, default=generate_uuid)
     inspection_id = Column(String, ForeignKey("inspections.id"), nullable=False)
-    file_path = Column(String, nullable=False)
+    object_key = Column(String, nullable=False)
     original_filename = Column(String, nullable=False)
     mime_type = Column(String, nullable=False)
     file_size = Column(Integer)
@@ -36,3 +36,4 @@ class InspectionImage(Base):
 
     inspection = relationship("Inspection", back_populates="images")
     observations = relationship("CrackObservation", back_populates="image")
+    analysis_job = relationship("AnalysisJob", back_populates="image", uselist=False, cascade="all, delete-orphan")

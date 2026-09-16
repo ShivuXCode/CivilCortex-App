@@ -37,8 +37,8 @@ DEFAULT_RESOURCES = {
     "estimated_cost": "Engineer Quote Required"
 }
 
-from core.config import settings
-from demo.demo_engine import get_demo_scenario
+from app.core.config import settings
+from app.demo.demo_engine import get_demo_scenario
 
 def optimize_resources(state: dict) -> dict:
     # 0. Controlled Prototype / Demo Mode Execution

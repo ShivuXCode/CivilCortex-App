@@ -11,7 +11,7 @@ def generate_uuid():
 class Defect(Base):
     __tablename__ = "defects"
     id = Column(String, primary_key=True, default=generate_uuid)
-    structural_element_id = Column(String, ForeignKey("structural_elements.id"), nullable=False)
+    structural_element_id = Column(String, ForeignKey("structural_elements.id"), nullable=True)
     defect_type = Column(String, nullable=False)  # "crack", "spalling", "efflorescence"
     status = Column(String, nullable=False, default="CANDIDATE") # CANDIDATE, MONITORED, REPAIRED, DISMISSED
     created_at = Column(DateTime, default=datetime.utcnow)
@@ -39,7 +39,11 @@ class Assessment(Base):
     observation_id = Column(String, ForeignKey("crack_observations.id"), nullable=False, unique=True)
     severity = Column(String, nullable=False, default="UNKNOWN") # LOW, MODERATE, HIGH, CRITICAL, UNKNOWN
     risk = Column(String, nullable=False, default="REQUIRES_REVIEW") # LOW, MODERATE, HIGH, REQUIRES_ENGINEER_REVIEW, REQUIRES_REVIEW
+    risk_score = Column(Integer, nullable=True)
+    priority = Column(String, nullable=True)
+    rag_context = Column(String, nullable=True)
     repair_recommendation = Column(String, nullable=True)
+    llm_report = Column(String, nullable=True)
     created_at = Column(DateTime, default=datetime.utcnow)
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
 

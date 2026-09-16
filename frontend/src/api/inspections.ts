@@ -46,7 +46,39 @@ export const uploadInspectionImage = async (inspectionId: string, file: File): P
   return response.data;
 };
 
-export const analyzeImage = async (inspectionId: string, imageId: string): Promise<AnalysisResult> => {
+export interface AnalyzeImageResponse {
+  job_id: string;
+  status: string;
+  message: string;
+}
+
+export const analyzeImage = async (inspectionId: string, imageId: string): Promise<AnalyzeImageResponse> => {
   const response = await apiClient.post(`/inspections/${inspectionId}/images/${imageId}/analyze`);
+  return response.data;
+};
+
+export interface AssessmentResponse {
+  id: string;
+  observation_id: string;
+  severity: string;
+  risk: string;
+  repair_recommendation?: string;
+  created_at: string;
+  updated_at: string;
+}
+
+export const getAssessment = async (inspectionId: string): Promise<AssessmentResponse[]> => {
+  const response = await apiClient.get(`/inspections/${inspectionId}/assessment`);
+  return response.data;
+};
+
+export interface ReportResponse {
+  content: string;
+  generated_at: string;
+  status: string;
+}
+
+export const getReport = async (inspectionId: string): Promise<ReportResponse> => {
+  const response = await apiClient.get(`/inspections/${inspectionId}/report`);
   return response.data;
 };

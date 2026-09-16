@@ -26,4 +26,5 @@ class AgentState(TypedDict, total=False):
     required_materials: Optional[List[str]]
     estimated_cost: Optional[str]
     rag_context: Optional[str]
+    rag_evidence: Optional[list]
     recommendation: Optional[str]

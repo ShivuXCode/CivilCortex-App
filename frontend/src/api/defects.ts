@@ -17,9 +17,12 @@ export interface CrackObservation {
 
 export interface Assessment {
   id: string;
+  observation_id: string;
   severity: string;
   risk: string;
   repair_recommendation?: string;
+  created_at: string;
+  updated_at: string;
 }
 
 export const getDefects = async (): Promise<Defect[]> => {
@@ -44,5 +47,16 @@ export const createAssessment = async (observationId: string, data: { severity: 
 
 export const updateDefectStatus = async (defectId: string, status: string): Promise<Defect> => {
   const response = await apiClient.put(`/defects/${defectId}`, { status });
+  return response.data;
+};
+
+export interface AssessmentUpdate {
+  severity?: string;
+  risk?: string;
+  repair_recommendation?: string;
+}
+
+export const updateAssessment = async (assessmentId: string, data: AssessmentUpdate): Promise<Assessment> => {
+  const response = await apiClient.patch(`/defects/assessments/${assessmentId}`, data);
   return response.data;
 };

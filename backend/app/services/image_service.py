@@ -1,13 +1,12 @@
 import os
-import shutil
 import uuid
 from pathlib import Path
 from fastapi import UploadFile, HTTPException
-from app.core.config import settings
+from app.services.storage_service import storage_service
 
 class ImageService:
     @staticmethod
-    def save_image(file: UploadFile) -> dict:
+    def save_image(file: UploadFile, inspection_id: str) -> dict:
         allowed_types = ["image/jpeg", "image/png", "image/webp"]
         if file.content_type not in allowed_types:
             raise HTTPException(status_code=400, detail="Invalid image type")
@@ -16,27 +15,26 @@ class ImageService:
         if file.size and file.size > 20 * 1024 * 1024:
             raise HTTPException(status_code=400, detail="File too large")
             
-        ext = os.path.splitext(file.filename)[1]
+        ext = os.path.splitext(file.filename)[1].lower()
+        if ext not in [".jpg", ".jpeg", ".png", ".webp"]:
+            raise HTTPException(status_code=400, detail="Invalid extension")
+
         unique_name = f"{uuid.uuid4()}{ext}"
+        object_key = f"inspections/{inspection_id}/images/{unique_name}"
         
-        # Determine path from ROOT/storage/images
-        # Since backend is in backend/ and ROOT is parent, let's resolve relative to backend if needed
-        # Or just use the absolute configured path if it's relative to the project root where app is run
-        # We assume the FastAPI app is run from `backend` directory, but the user requested:
-        # "storage/images/ at the PROJECT ROOT"
-        # We'll calculate the project root relative to this file
-        project_root = Path(__file__).parent.parent.parent.parent
-        storage_dir = project_root / settings.STORAGE_ROOT
-        storage_dir.mkdir(parents=True, exist_ok=True)
+        # Ensure we are at the beginning of the file
+        file.file.seek(0, os.SEEK_END)
+        file_size = file.file.tell()
+        file.file.seek(0)
         
-        file_path = storage_dir / unique_name
-        
-        with open(file_path, "wb") as buffer:
-            shutil.copyfileobj(file.file, buffer)
+        try:
+            storage_service.upload_file(file.file, object_key, file_size, file.content_type)
+        except Exception as e:
+            raise HTTPException(status_code=500, detail="Failed to upload image to storage")
             
         return {
-            "file_path": str(file_path.resolve()),
+            "object_key": object_key,
             "original_filename": file.filename,
             "mime_type": file.content_type,
-            "file_size": file.size or os.path.getsize(file_path)
+            "file_size": file_size
         }

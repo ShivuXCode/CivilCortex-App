@@ -3,10 +3,10 @@ import io
 import base64
 import numpy as np
 from pydantic import BaseModel, Field
-from core.logger import logger
+from app.core.logger import logger
 
-from core.config import settings
-from demo.demo_engine import get_demo_condition_state
+from app.core.config import settings
+from app.demo.demo_engine import get_demo_condition_state
 
 try:
     import tensorflow as tf

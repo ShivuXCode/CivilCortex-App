@@ -36,6 +36,7 @@ ml_pipeline/experiments/
 
 # Database and Storage
 civilcortex.db
+*.db
 storage/
 *.sqlite3
 

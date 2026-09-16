@@ -8,6 +8,7 @@ import { Buildings } from './pages/Buildings';
 import { BuildingDetail } from './pages/BuildingDetail';
 import { NewInspection } from './pages/NewInspection';
 import { Defects } from './pages/Defects';
+import { Report } from './pages/Report';
 
 const PrivateRoute = ({ children }: { children: React.ReactNode }) => {
   const { user, loading } = useAuth();
@@ -49,6 +50,7 @@ function AppRoutes() {
         <Route path="inspections">
           <Route index element={<Navigate to="/dashboard" replace />} />
           <Route path="new" element={<NewInspection />} />
+          <Route path=":id/report" element={<Report />} />
         </Route>
 
         <Route path="defects" element={<Defects />} />

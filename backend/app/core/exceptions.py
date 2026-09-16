@@ -1,29 +1,54 @@
-from fastapi import HTTPException, status
+class CivilCortexError(Exception):
+    """Base exception for all domain errors."""
+    def __init__(self, message: str, code: str):
+        super().__init__(message)
+        self.code = code
+        self.message = message
 
-class BaseAPIException(HTTPException):
-    def __init__(self, status_code: int, detail: str, error_code: str = "UNKNOWN_ERROR"):
-        super().__init__(status_code=status_code, detail={"message": detail, "code": error_code})
+class ValidationError(CivilCortexError):
+    def __init__(self, message: str):
+        super().__init__(message, "VALIDATION_ERROR")
 
-class ResourceNotFoundException(BaseAPIException):
-    def __init__(self, resource: str, resource_id: int):
-        super().__init__(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail=f"{resource} with id {resource_id} not found.",
-            error_code="RESOURCE_NOT_FOUND"
-        )
+class AuthenticationError(CivilCortexError):
+    def __init__(self, message: str):
+        super().__init__(message, "AUTHENTICATION_ERROR")
 
-class StateTransitionException(BaseAPIException):
-    def __init__(self, resource: str, current_state: str, target_state: str):
-        super().__init__(
-            status_code=status.HTTP_409_CONFLICT,
-            detail=f"Invalid state transition for {resource} from {current_state} to {target_state}.",
-            error_code="INVALID_STATE_TRANSITION"
-        )
+class AuthorizationError(CivilCortexError):
+    def __init__(self, message: str):
+        super().__init__(message, "AUTHORIZATION_ERROR")
 
-class ValidationException(BaseAPIException):
-    def __init__(self, detail: str):
-        super().__init__(
-            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
-            detail=detail,
-            error_code="VALIDATION_ERROR"
-        )
+class NotFoundError(CivilCortexError):
+    def __init__(self, message: str):
+        super().__init__(message, "NOT_FOUND")
+
+class StorageError(CivilCortexError):
+    def __init__(self, message: str):
+        super().__init__(message, "STORAGE_ERROR")
+
+class ImageProcessingError(CivilCortexError):
+    def __init__(self, message: str):
+        super().__init__(message, "IMAGE_PROCESSING_ERROR")
+
+class CVInferenceError(CivilCortexError):
+    def __init__(self, message: str):
+        super().__init__(message, "CV_INFERENCE_ERROR")
+
+class RAGError(CivilCortexError):
+    def __init__(self, message: str):
+        super().__init__(message, "RAG_ERROR")
+
+class LLMError(CivilCortexError):
+    def __init__(self, message: str):
+        super().__init__(message, "LLM_ERROR")
+
+class DatabaseError(CivilCortexError):
+    def __init__(self, message: str):
+        super().__init__(message, "DATABASE_ERROR")
+
+class QueueError(CivilCortexError):
+    def __init__(self, message: str):
+        super().__init__(message, "QUEUE_ERROR")
+
+class InternalError(CivilCortexError):
+    def __init__(self, message: str = "Internal server error"):
+        super().__init__(message, "INTERNAL_ERROR")

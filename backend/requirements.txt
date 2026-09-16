@@ -13,8 +13,7 @@ requests>=2.31.0
 # --- Database & Authentication ---
 sqlalchemy>=2.0.30
 psycopg2-binary>=2.9.9
-passlib[bcrypt]>=1.7.4
-bcrypt>=4.0.0
+bcrypt>=4.0.1
 PyJWT>=2.8.0
 
 # --- LangGraph & Multi-Agent Architecture ---
@@ -40,3 +39,12 @@ scipy>=1.13.0
 
 # --- Document & PDF Generation ---
 fpdf2>=2.7.9
+
+# --- Background Jobs ---
+rq>=1.16.0
+redis>=5.0.0
+
+# --- Storage ---
+minio>=7.2.7
+slowapi>=0.1.9
+limits>=3.0

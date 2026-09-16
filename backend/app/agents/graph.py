@@ -1,11 +1,11 @@
 from langgraph.graph import StateGraph, START, END
-from agents.state import AgentState
-from agents.nodes.agent1_condition import assess_condition
-from agents.nodes.agent2_risk import assess_risk
-from agents.nodes.agent3_priority import assess_priority
-from agents.nodes.agent4_planning import plan_maintenance
-from agents.nodes.agent5_resources import optimize_resources
-from agents.nodes.agent6_llm import generate_recommendation
+from app.agents.state import AgentState
+from app.agents.nodes.agent1_condition import assess_condition
+from app.agents.nodes.agent2_risk import assess_risk
+from app.agents.nodes.agent3_priority import assess_priority
+from app.agents.nodes.agent4_planning import plan_maintenance
+from app.agents.nodes.agent5_resources import optimize_resources
+from app.agents.nodes.agent6_llm import generate_recommendation
 
 import concurrent.futures
 

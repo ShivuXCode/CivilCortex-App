@@ -4,7 +4,7 @@ Provides centralized scenario lookup and state injection for all pipeline agents
 """
 
 from typing import Dict, Any, List
-from demo.scenarios import DEMO_SCENARIOS, DEFAULT_SCENARIO_ID
+from app.demo.scenarios import DEMO_SCENARIOS, DEFAULT_SCENARIO_ID
 
 def get_demo_scenario(scenario_id: str = None) -> Dict[str, Any]:
     """

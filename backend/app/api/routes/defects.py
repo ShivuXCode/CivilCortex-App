@@ -1,14 +1,15 @@
 from fastapi import APIRouter, Depends, HTTPException
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session, joinedload
 from typing import List
 from app.db.session import get_db
 from app.api.deps import get_current_user
-from app.models import User, Defect, StructuralElement, CrackObservation, InspectionImage, Assessment, Building, Floor, Area
+from app.models import User, Defect, StructuralElement, CrackObservation, InspectionImage, Assessment, Building, Floor, Area, Inspection
 from app.schemas.defect import (
     DefectCreate, DefectResponse, DefectUpdate,
     CrackObservationCreate, CrackObservationResponse,
     AssessmentCreate, AssessmentResponse
 )
+import app.schemas.defect
 
 router = APIRouter()
 
@@ -19,16 +20,18 @@ VALID_TRANSITIONS = {
     "DISMISSED": []
 }
 
+from fastapi import Query
+
 @router.get("/", response_model=List[DefectResponse])
-def get_defects(db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
+def get_defects(skip: int = Query(default=0, ge=0), limit: int = Query(default=100, ge=1, le=100), db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
     return db.query(Defect).join(StructuralElement).join(Area).join(Floor).join(Building).filter(
-        Building.owner_id == current_user.id
-    ).all()
+        Building.organization_id == current_user.organization_id
+    ).offset(skip).limit(limit).all()
 
 @router.post("/", response_model=DefectResponse)
 def create_defect(defect: DefectCreate, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
-    element = db.query(StructuralElement).filter(StructuralElement.id == defect.structural_element_id).first()
-    if not element or element.area.floor.building.owner_id != current_user.id:
+    element = db.query(StructuralElement).options(joinedload(StructuralElement.area).joinedload(Area.floor).joinedload(Floor.building)).filter(StructuralElement.id == defect.structural_element_id).first()
+    if not element or element.area.floor.building.organization_id != current_user.organization_id:
         raise HTTPException(status_code=403, detail="Structural Element not found or access denied")
     
     db_obj = Defect(**defect.model_dump())
@@ -39,8 +42,8 @@ def create_defect(defect: DefectCreate, db: Session = Depends(get_db), current_u
 
 @router.put("/{defect_id}", response_model=DefectResponse)
 def update_defect_status(defect_id: str, defect_update: DefectUpdate, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
-    defect = db.query(Defect).filter(Defect.id == defect_id).first()
-    if not defect or defect.structural_element.area.floor.building.owner_id != current_user.id:
+    defect = db.query(Defect).options(joinedload(Defect.structural_element).joinedload(StructuralElement.area).joinedload(Area.floor).joinedload(Floor.building)).filter(Defect.id == defect_id).first()
+    if not defect or defect.structural_element.area.floor.building.organization_id != current_user.organization_id:
         raise HTTPException(status_code=403, detail="Defect not found or access denied")
     
     new_status = defect_update.status
@@ -55,8 +58,8 @@ def update_defect_status(defect_id: str, defect_update: DefectUpdate, db: Sessio
 @router.post("/observations", response_model=CrackObservationResponse)
 def create_observation(obs: CrackObservationCreate, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
     # Verify defect access
-    defect = db.query(Defect).filter(Defect.id == obs.defect_id).first()
-    if not defect or defect.structural_element.area.floor.building.owner_id != current_user.id:
+    defect = db.query(Defect).options(joinedload(Defect.structural_element).joinedload(StructuralElement.area).joinedload(Area.floor).joinedload(Floor.building)).filter(Defect.id == obs.defect_id).first()
+    if not defect or defect.structural_element.area.floor.building.organization_id != current_user.organization_id:
         raise HTTPException(status_code=403, detail="Defect not found or access denied")
     
     # Create observation
@@ -68,8 +71,8 @@ def create_observation(obs: CrackObservationCreate, db: Session = Depends(get_db
 
 @router.post("/observations/{observation_id}/assessments", response_model=AssessmentResponse)
 def create_assessment(observation_id: str, assessment: AssessmentCreate, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
-    obs = db.query(CrackObservation).filter(CrackObservation.id == observation_id).first()
-    if not obs or obs.defect.structural_element.area.floor.building.owner_id != current_user.id:
+    obs = db.query(CrackObservation).options(joinedload(CrackObservation.defect).joinedload(Defect.structural_element).joinedload(StructuralElement.area).joinedload(Area.floor).joinedload(Floor.building)).filter(CrackObservation.id == observation_id).first()
+    if not obs or obs.defect.structural_element.area.floor.building.organization_id != current_user.organization_id:
         raise HTTPException(status_code=403, detail="Observation not found or access denied")
     
     existing = db.query(Assessment).filter(Assessment.observation_id == observation_id).first()
@@ -81,3 +84,37 @@ def create_assessment(observation_id: str, assessment: AssessmentCreate, db: Ses
     db.commit()
     db.refresh(db_obj)
     return db_obj
+
+from app.api.deps import RoleChecker
+
+@router.patch("/assessments/{assessment_id}", response_model=AssessmentResponse)
+def update_assessment(
+    assessment_id: str,
+    assessment_update: app.schemas.defect.AssessmentUpdate,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(RoleChecker(["ENGINEER", "ADMIN"]))
+):
+    assessment = db.query(Assessment).options(
+        joinedload(Assessment.observation).joinedload(CrackObservation.defect).joinedload(Defect.structural_element).joinedload(StructuralElement.area).joinedload(Area.floor).joinedload(Floor.building),
+        joinedload(Assessment.observation).joinedload(CrackObservation.inspection).joinedload(Inspection.building)
+    ).filter(Assessment.id == assessment_id).first()
+    if not assessment:
+        raise HTTPException(status_code=404, detail="Assessment not found")
+        
+    # Verify ownership through the observation -> defect -> structural_element -> area -> floor -> building
+    if assessment.observation.defect.structural_element:
+        org_id = assessment.observation.defect.structural_element.area.floor.building.organization_id
+    else:
+        # If defect has no structural element, check the inspection's building
+        org_id = assessment.observation.inspection.building.organization_id
+        
+    if org_id != current_user.organization_id:
+        raise HTTPException(status_code=403, detail="Access denied")
+        
+    update_data = assessment_update.model_dump(exclude_unset=True)
+    for key, value in update_data.items():
+        setattr(assessment, key, value)
+        
+    db.commit()
+    db.refresh(assessment)
+    return assessment

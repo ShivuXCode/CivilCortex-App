@@ -2,9 +2,9 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle, Button } from '../components/ui';
 import { getBuildings, getBuilding, Building, BuildingDetail } from '../api/hierarchy';
-import { createInspection, uploadInspectionImage, analyzeImage, AnalysisResult } from '../api/inspections';
-import { createDefect, createObservation } from '../api/defects';
-import { UploadCloud, CheckCircle, AlertTriangle } from 'lucide-react';
+import { createInspection, uploadInspectionImage, analyzeImage } from '../api/inspections';
+import { getAnalysisJob, AnalysisJobResponse } from '../api/analysis';
+import { UploadCloud, CheckCircle, AlertTriangle, Loader2 } from 'lucide-react';
 
 export const NewInspection = () => {
   const navigate = useNavigate();
@@ -22,9 +22,12 @@ export const NewInspection = () => {
   const [inspectionId, setInspectionId] = useState('');
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [isUploading, setIsUploading] = useState(false);
-  const [analysisResult, setAnalysisResult] = useState<AnalysisResult | null>(null);
-  const [imageId, setImageId] = useState('');
-  const [isSaving, setIsSaving] = useState(false);
+
+  
+  // Job State
+  const [jobId, setJobId] = useState('');
+  const [jobStatus, setJobStatus] = useState<AnalysisJobResponse['status'] | ''>('');
+  const [jobError, setJobError] = useState<string | null>(null);
 
   useEffect(() => {
     getBuildings().then(setBuildings).catch(console.error);
@@ -35,6 +38,32 @@ export const NewInspection = () => {
       getBuilding(selectedBuildingId).then(setBuildingDetail).catch(console.error);
     }
   }, [selectedBuildingId]);
+
+  // Polling Effect
+  useEffect(() => {
+    let interval: ReturnType<typeof setInterval>;
+
+    const pollJob = async () => {
+      if (!jobId || jobStatus === 'COMPLETED' || jobStatus === 'FAILED') return;
+      try {
+        const res = await getAnalysisJob(jobId);
+        setJobStatus(res.status);
+        if (res.error_message) {
+          setJobError(res.error_message);
+        }
+      } catch (err) {
+        console.error("Failed to fetch job status", err);
+      }
+    };
+
+    if (jobId && jobStatus !== 'COMPLETED' && jobStatus !== 'FAILED') {
+      interval = setInterval(pollJob, 2000);
+    }
+
+    return () => {
+      if (interval) clearInterval(interval);
+    };
+  }, [jobId, jobStatus]);
 
   const handleStartInspection = async () => {
     if (!selectedBuildingId || !selectedElementId) return;
@@ -59,39 +88,17 @@ export const NewInspection = () => {
     try {
       // 1. Upload
       const imgRes = await uploadInspectionImage(inspectionId, imageFile);
-      setImageId(imgRes.id);
       
       // 2. Analyze
       const result = await analyzeImage(inspectionId, imgRes.id);
-      setAnalysisResult(result);
+      setJobId(result.job_id);
+      setJobStatus(result.status as AnalysisJobResponse['status']);
       setStep(3);
     } catch (err) {
-      console.error("Failed to analyze image");
-      alert("Failed to upload/analyze image. Please check supported formats and backend connectivity.");
+      console.error("Failed to upload or trigger analysis");
+      alert("Failed to upload image or trigger analysis. Please check supported formats and backend connectivity.");
     } finally {
       setIsUploading(false);
-    }
-  };
-
-  const handleSaveDefect = async () => {
-    if (!analysisResult || !selectedElementId || !inspectionId || !imageId) return;
-    setIsSaving(true);
-    try {
-      const defect = await createDefect({ 
-        defect_type: analysisResult.defect_type, 
-        structural_element_id: selectedElementId 
-      });
-      await createObservation({
-        defect_id: defect.id,
-        inspection_id: inspectionId,
-        image_id: imageId
-      });
-      navigate(`/defects`);
-    } catch (err) {
-      console.error("Failed to save defect");
-      alert("Failed to save observation.");
-    } finally {
-      setIsSaving(false);
     }
   };
 
@@ -109,8 +116,9 @@ export const NewInspection = () => {
           </CardHeader>
           <CardContent className="space-y-4">
             <div>
-              <label className="text-sm font-medium text-slate-700">Building</label>
+              <label htmlFor="building-select" className="text-sm font-medium text-slate-700">Building</label>
               <select 
+                id="building-select"
                 className="mt-1 block w-full rounded-md border-slate-300 py-2 pl-3 pr-10 text-base focus:border-slate-500 focus:outline-none focus:ring-slate-500 sm:text-sm border bg-white"
                 value={selectedBuildingId}
                 onChange={(e) => {
@@ -125,8 +133,9 @@ export const NewInspection = () => {
 
             {buildingDetail && (
               <div>
-                <label className="text-sm font-medium text-slate-700">Floor</label>
+                <label htmlFor="floor-select" className="text-sm font-medium text-slate-700">Floor</label>
                 <select 
+                  id="floor-select"
                   className="mt-1 block w-full rounded-md border-slate-300 py-2 pl-3 pr-10 text-base focus:border-slate-500 focus:outline-none focus:ring-slate-500 sm:text-sm border bg-white"
                   value={selectedFloorId}
                   onChange={(e) => {
@@ -143,8 +152,9 @@ export const NewInspection = () => {
 
             {selectedFloorId && buildingDetail && (
               <div>
-                <label className="text-sm font-medium text-slate-700">Area</label>
+                <label htmlFor="area-select" className="text-sm font-medium text-slate-700">Area</label>
                 <select 
+                  id="area-select"
                   className="mt-1 block w-full rounded-md border-slate-300 py-2 pl-3 pr-10 text-base focus:border-slate-500 focus:outline-none focus:ring-slate-500 sm:text-sm border bg-white"
                   value={selectedAreaId}
                   onChange={(e) => {
@@ -160,8 +170,9 @@ export const NewInspection = () => {
 
             {selectedAreaId && buildingDetail && (
               <div>
-                <label className="text-sm font-medium text-slate-700">Structural Element</label>
+                <label htmlFor="element-select" className="text-sm font-medium text-slate-700">Structural Element</label>
                 <select 
+                  id="element-select"
                   className="mt-1 block w-full rounded-md border-slate-300 py-2 pl-3 pr-10 text-base focus:border-slate-500 focus:outline-none focus:ring-slate-500 sm:text-sm border bg-white"
                   value={selectedElementId}
                   onChange={(e) => setSelectedElementId(e.target.value)}
@@ -222,43 +233,60 @@ export const NewInspection = () => {
         </Card>
       )}
 
-      {step === 3 && analysisResult && (
-        <Card className="border-slate-800">
-          <CardHeader className="bg-slate-900 text-white rounded-t-xl">
+      {step === 3 && (
+        <Card className="border-slate-200">
+          <CardHeader className={jobStatus === 'COMPLETED' ? "bg-slate-900 text-white rounded-t-xl" : "bg-slate-100 rounded-t-xl border-b border-slate-200"}>
             <CardTitle className="flex items-center gap-2">
-              <CheckCircle className="h-5 w-5 text-emerald-400" />
-              AI-assisted result
+              {jobStatus === 'COMPLETED' ? (
+                <CheckCircle className="h-5 w-5 text-emerald-400" />
+              ) : jobStatus === 'FAILED' ? (
+                <AlertTriangle className="h-5 w-5 text-red-500" />
+              ) : (
+                <Loader2 className="h-5 w-5 animate-spin text-slate-500" />
+              )}
+              {jobStatus === 'QUEUED' && "Analysis Queued..."}
+              {jobStatus === 'PROCESSING' && "Analysis In Progress..."}
+              {jobStatus === 'COMPLETED' && "Analysis Completed"}
+              {jobStatus === 'FAILED' && "Analysis Failed"}
             </CardTitle>
           </CardHeader>
           <CardContent className="pt-6 space-y-6">
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <p className="text-sm font-medium text-slate-500">Detected Defect Type</p>
-                <p className="text-2xl font-bold capitalize text-slate-900">{analysisResult.defect_type}</p>
+            
+            {(jobStatus === 'QUEUED' || jobStatus === 'PROCESSING') && (
+              <div className="text-center py-12 space-y-4">
+                <p className="text-slate-600">Please wait while our models and AI agents evaluate the structural defect.</p>
+                <p className="text-sm text-slate-400">This may take up to 60 seconds.</p>
               </div>
-              <div>
-                <p className="text-sm font-medium text-slate-500">Model Confidence</p>
-                <p className="text-2xl font-bold text-slate-900">{(analysisResult.confidence * 100).toFixed(1)}%</p>
-              </div>
-            </div>
+            )}
 
-            <div className="bg-amber-50 border border-amber-200 rounded-md p-4 flex items-start gap-3">
-              <AlertTriangle className="h-5 w-5 text-amber-600 mt-0.5 flex-shrink-0" />
-              <div>
-                <p className="text-sm font-medium text-amber-800">Decision support — engineering review required.</p>
-                <p className="text-sm text-amber-700 mt-1">
-                  This classification was produced by the {analysisResult.model_name} {analysisResult.model_status} model. 
-                  Measurements and severity assessment are currently pending manual engineering review.
-                </p>
+            {jobStatus === 'COMPLETED' && (
+              <div className="space-y-6 text-center py-6">
+                <p className="text-slate-700 font-medium text-lg">Defect observation captured and analysis generated successfully.</p>
+                <div className="pt-4 flex justify-center">
+                  <Button onClick={() => navigate(`/inspections/${inspectionId}/report`)}>
+                    View Engineering Report
+                  </Button>
+                </div>
               </div>
-            </div>
+            )}
 
-            <div className="pt-4 border-t border-slate-200 flex justify-end gap-3">
-              <Button variant="ghost" onClick={() => setStep(2)} disabled={isSaving}>Retake Image</Button>
-              <Button onClick={handleSaveDefect} disabled={isSaving}>
-                {isSaving ? 'Saving...' : 'Confirm & Save Observation'}
-              </Button>
-            </div>
+            {jobStatus === 'FAILED' && (
+              <div className="space-y-4">
+                <div className="bg-red-50 border border-red-200 rounded-md p-4">
+                  <p className="text-sm font-medium text-red-800">Error during analysis processing</p>
+                  <p className="text-sm text-red-700 mt-1">{jobError || "An unknown error occurred."}</p>
+                </div>
+                <div className="pt-4 flex justify-end">
+                  <Button variant="ghost" onClick={() => {
+                    setJobId('');
+                    setJobStatus('');
+                    setStep(2);
+                  }}>
+                    Try Again
+                  </Button>
+                </div>
+              </div>
+            )}
           </CardContent>
         </Card>
       )}

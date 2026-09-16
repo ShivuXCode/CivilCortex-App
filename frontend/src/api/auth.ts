@@ -3,6 +3,8 @@ import { apiClient } from './client';
 export interface User {
   id: string;
   email: string;
+  role: string;
+  organization_id: string;
 }
 
 export const login = async (email: string, password: string) => {

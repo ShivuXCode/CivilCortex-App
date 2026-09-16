@@ -13,6 +13,8 @@ class User(Base):
     id = Column(String, primary_key=True, default=generate_uuid)
     email = Column(String, unique=True, index=True, nullable=False)
     hashed_password = Column(String, nullable=False)
+    role = Column(String, nullable=False, default="INSPECTOR") # INSPECTOR, ENGINEER, ADMIN
+    organization_id = Column(String, nullable=False)
     created_at = Column(DateTime, default=datetime.utcnow)
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
 
@@ -23,6 +25,7 @@ class Building(Base):
     __tablename__ = "buildings"
     id = Column(String, primary_key=True, default=generate_uuid)
     owner_id = Column(String, ForeignKey("users.id"), nullable=False)
+    organization_id = Column(String, nullable=False)
     name = Column(String, nullable=False)
     location = Column(String)
     created_at = Column(DateTime, default=datetime.utcnow)

@@ -28,7 +28,7 @@ class InspectionImageBase(BaseModel):
 
 class InspectionImageResponse(InspectionImageBase):
     id: str
-    file_path: str
+    object_key: str
     created_at: datetime
 
     class Config:
