@@ -3,28 +3,35 @@ import { useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle, Button } from '../components/ui';
 import { getBuildings } from '../api/hierarchy';
 import { getInspections } from '../api/inspections';
+import { getDefects } from '../api/defects';
 
 export const Dashboard = () => {
   const navigate = useNavigate();
   const [stats, setStats] = useState({
     buildings: 0,
     activeInspections: 0,
-    openDefects: 0, // Placeholder if no API
+    openDefects: 0,
   });
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
     const fetchDashboardData = async () => {
       try {
-        const [buildings, inspections] = await Promise.all([
+        const [buildings, inspections, defects] = await Promise.all([
           getBuildings(),
-          getInspections()
+          getInspections(),
+          getDefects()
         ]);
+        
+        // Open defects are those that need attention (not repaired or dismissed)
+        const openDefectsCount = defects.filter(d => 
+          d.status === 'CANDIDATE' || d.status === 'MONITORED'
+        ).length;
         
         setStats({
           buildings: buildings.length,
-          activeInspections: inspections.length, // Approximation based on available data
-          openDefects: 0 // Cannot reliably calculate without a global defects endpoint, so we default to 0 to avoid fabricating
+          activeInspections: inspections.length,
+          openDefects: openDefectsCount
         });
       } catch (err) {
         console.error("Failed to load dashboard data");
@@ -68,11 +75,11 @@ export const Dashboard = () => {
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium text-slate-500">Open Defects</CardTitle>
+            <CardTitle className="text-sm font-medium">Open Defects</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-slate-400">--</div>
-            <p className="text-xs text-slate-500 mt-1">Global aggregation unavailable</p>
+            <div className="text-2xl font-bold text-red-500">{stats.openDefects}</div>
+            <p className="text-xs text-slate-500 mt-1">Requires attention</p>
           </CardContent>
         </Card>
       </div>
