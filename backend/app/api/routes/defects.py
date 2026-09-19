@@ -1,8 +1,8 @@
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.orm import Session, joinedload
 from typing import List
 from app.db.session import get_db
-from app.api.deps import get_current_user
+from app.api.deps import get_current_user, RoleChecker
 from app.models import User, Defect, StructuralElement, CrackObservation, InspectionImage, Assessment, Building, Floor, Area, Inspection
 from app.schemas.defect import (
     DefectCreate, DefectResponse, DefectUpdate,
@@ -20,7 +20,6 @@ VALID_TRANSITIONS = {
     "DISMISSED": []
 }
 
-from fastapi import Query
 
 @router.get("/", response_model=List[DefectResponse])
 def get_defects(skip: int = Query(default=0, ge=0), limit: int = Query(default=100, ge=1, le=100), db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
@@ -98,8 +97,6 @@ def create_assessment(observation_id: str, assessment: AssessmentCreate, db: Ses
     db.commit()
     db.refresh(db_obj)
     return db_obj
-
-from app.api.deps import RoleChecker
 
 @router.patch("/assessments/{assessment_id}", response_model=AssessmentResponse)
 def update_assessment(

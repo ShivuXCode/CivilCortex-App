@@ -1,16 +1,19 @@
-from fastapi import APIRouter, Depends, HTTPException, UploadFile, File, Request
+from fastapi import APIRouter, Depends, HTTPException, UploadFile, File, Request, Query
 from sqlalchemy.orm import Session
 from typing import List
 from app.db.session import get_db
 from app.api.deps import get_current_user
 from app.models import User, Inspection, Building, InspectionImage
+from app.models.analysis import AnalysisJob
 from app.schemas.inspection import (
     InspectionCreate, InspectionResponse,
     InspectionImageResponse
 )
 import app.schemas.defect
+from app.models.defect import CrackObservation, Assessment
 from app.services.image_service import ImageService
 from app.services.ml_service import MLService
+from app.worker import analysis_queue, run_analysis_job
 from app.core.limiter import limiter
 
 router = APIRouter()
@@ -20,14 +23,12 @@ def create_inspection(inspection: InspectionCreate, db: Session = Depends(get_db
     building = db.query(Building).filter(Building.id == inspection.building_id, Building.organization_id == current_user.organization_id).first()
     if not building:
         raise HTTPException(status_code=403, detail="Building not found or access denied")
-    
+
     db_obj = Inspection(**inspection.model_dump(), inspector_id=current_user.id)
     db.add(db_obj)
     db.commit()
     db.refresh(db_obj)
     return db_obj
-
-from fastapi import Query
 
 @router.get("/", response_model=List[InspectionResponse])
 def get_inspections(skip: int = Query(default=0, ge=0), limit: int = Query(default=100, ge=1, le=100), db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
@@ -66,9 +67,8 @@ def analyze_image(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user)
 ):
-    from app.models.analysis import AnalysisJob
     from app.worker import analysis_queue, run_analysis_job
-    
+
     # 1. Check if image belongs to inspection and inspection belongs to user
     image = db.query(InspectionImage).filter(
         InspectionImage.id == image_id,
@@ -116,7 +116,6 @@ def get_inspection_assessments(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user)
 ):
-    from app.models.defect import CrackObservation, Assessment
     
     inspection = db.query(Inspection).join(Building).filter(
         Inspection.id == inspection_id,
@@ -138,7 +137,6 @@ def get_inspection_report(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user)
 ):
-    from app.models.defect import CrackObservation, Assessment
     
     inspection = db.query(Inspection).join(Building).filter(
         Inspection.id == inspection_id,
