@@ -11,6 +11,9 @@ class AgentState(TypedDict, total=False):
     image_bytes: Optional[bytes]
     scenario: Optional[str]
     mode: Optional[str]
+    mask_coverage: Optional[float]
+    component_count: Optional[int]
+    largest_component_area: Optional[int]
     
     # Agent Outputs
     crack_detected: Optional[bool]

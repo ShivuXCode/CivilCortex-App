@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle, Button, Input } from '../components/ui';
-import { getBuildings, createBuilding, Building } from '../api/hierarchy';
+import { getBuildings, createBuilding, createFloor, createArea, createStructuralElement, Building } from '../api/hierarchy';
 import { Search, Plus, Building2 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 
@@ -11,6 +11,9 @@ export const Buildings = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [isAdding, setIsAdding] = useState(false);
   const [newBuildingName, setNewBuildingName] = useState('');
+  const [newBuildingLocation, setNewBuildingLocation] = useState('');
+  const [numFloors, setNumFloors] = useState(1);
+  const [isSaving, setIsSaving] = useState(false);
 
   const fetchBuildings = async () => {
     try {
@@ -30,18 +33,48 @@ export const Buildings = () => {
   const handleAddBuilding = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!newBuildingName.trim()) return;
-    
+
+    setIsSaving(true);
     try {
-      await createBuilding({ name: newBuildingName });
+      // 1. Create the building
+      const building = await createBuilding({
+        name: newBuildingName,
+        location: newBuildingLocation || undefined,
+      });
+
+      // 2. Auto-create floors, areas, and structural elements (full hierarchy)
+      const floorCount = Math.max(1, Math.min(numFloors, 50));
+      const defaultAreas = ['Columns', 'Beams', 'Walls', 'Ceiling', 'Foundation'];
+      const defaultElements: { name: string; element_type: string }[] = [
+        { name: 'Column C1', element_type: 'Column' },
+        { name: 'Column C2', element_type: 'Column' },
+        { name: 'Beam B1',   element_type: 'Beam' },
+        { name: 'Wall W1',   element_type: 'Wall' },
+        { name: 'Slab S1',   element_type: 'Slab' },
+      ];
+      for (let i = 1; i <= floorCount; i++) {
+        const floor = await createFloor({ name: `Floor ${i}`, level: i, building_id: building.id });
+        for (const areaName of defaultAreas) {
+          const area = await createArea({ name: areaName, floor_id: floor.id });
+          for (const el of defaultElements) {
+            await createStructuralElement({ name: el.name, element_type: el.element_type, area_id: area.id });
+          }
+        }
+      }
+
       setNewBuildingName('');
+      setNewBuildingLocation('');
+      setNumFloors(1);
       setIsAdding(false);
       fetchBuildings();
     } catch (err) {
       console.error("Failed to create building");
+    } finally {
+      setIsSaving(false);
     }
   };
 
-  const filteredBuildings = buildings.filter(b => 
+  const filteredBuildings = buildings.filter(b =>
     b.name.toLowerCase().includes(search.toLowerCase())
   );
 
@@ -60,18 +93,47 @@ export const Buildings = () => {
       {isAdding && (
         <Card className="bg-slate-50 border-dashed">
           <CardContent className="pt-6">
-            <form onSubmit={handleAddBuilding} className="flex items-end gap-4">
-              <div className="flex-1 space-y-2">
-                <label className="text-sm font-medium text-slate-700">Building Name</label>
-                <Input 
-                  value={newBuildingName}
-                  onChange={(e) => setNewBuildingName(e.target.value)}
-                  placeholder="e.g., North Wing Concrete Core"
-                  autoFocus
-                />
+            <form onSubmit={handleAddBuilding} className="space-y-4">
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                <div className="sm:col-span-1 space-y-2">
+                  <label className="text-sm font-medium text-slate-700">Building Name *</label>
+                  <Input
+                    value={newBuildingName}
+                    onChange={(e) => setNewBuildingName(e.target.value)}
+                    placeholder="e.g., North Wing"
+                    autoFocus
+                    required
+                  />
+                </div>
+                <div className="sm:col-span-1 space-y-2">
+                  <label className="text-sm font-medium text-slate-700">Location</label>
+                  <Input
+                    value={newBuildingLocation}
+                    onChange={(e) => setNewBuildingLocation(e.target.value)}
+                    placeholder="e.g., Site A, Block 3"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <label className="text-sm font-medium text-slate-700">Number of Floors *</label>
+                  <Input
+                    type="number"
+                    min={1}
+                    max={50}
+                    value={numFloors}
+                    onChange={(e) => setNumFloors(parseInt(e.target.value) || 1)}
+                    placeholder="e.g., 5"
+                    required
+                  />
+                </div>
               </div>
-              <Button type="submit">Save</Button>
-              <Button variant="ghost" type="button" onClick={() => setIsAdding(false)}>Cancel</Button>
+              <div className="flex items-center gap-3">
+                <Button type="submit" disabled={isSaving}>
+                  {isSaving ? 'Creating...' : 'Save Building'}
+                </Button>
+                <Button variant="ghost" type="button" onClick={() => setIsAdding(false)}>
+                  Cancel
+                </Button>
+              </div>
             </form>
           </CardContent>
         </Card>
@@ -79,9 +141,9 @@ export const Buildings = () => {
 
       <div className="relative">
         <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
-        <Input 
-          className="pl-9" 
-          placeholder="Search buildings..." 
+        <Input
+          className="pl-9"
+          placeholder="Search buildings..."
           value={search}
           onChange={(e) => setSearch(e.target.value)}
         />

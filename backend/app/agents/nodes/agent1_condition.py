@@ -8,18 +8,6 @@ from app.core.logger import logger
 from app.core.config import settings
 from app.demo.demo_engine import get_demo_condition_state
 
-try:
-    import tensorflow as tf
-    import keras
-    from PIL import Image
-    MODEL_PATH = os.path.join(os.path.dirname(__file__), "..", "..", "models", "civilcortex_best.keras")
-    if os.path.exists(MODEL_PATH):
-        model = keras.saving.load_model(MODEL_PATH, compile=False)
-    else:
-        model = None
-except Exception as e:
-    print(f"Failed to load Keras model, relying on Gemini fallback: {e}")
-    model = None
 
 class VisionClassificationResponse(BaseModel):
     crack_type: str = Field(description="The specific type of structural defect identified, e.g. 'Deep Foundation Settlement', 'Spalling', 'Hairline Crack'. If no crack, return 'None'.")
@@ -42,26 +30,15 @@ def assess_condition(state: dict) -> dict:
     severity = "low"
     
     if image_bytes:
-        crack_ratio = 0.0
+        # 1. Extract CV geometric metrics from the state
+        mask_coverage = state.get("mask_coverage", 0.0) or 0.0
+        component_count = state.get("component_count", 0) or 0
+        largest_component_area = state.get("largest_component_area", 0) or 0
         
-        # 1. Run local Keras model FIRST to detect crack pixels
-        if model:
-            try:
-                IMG_SIZE = 384
-                img = Image.open(io.BytesIO(image_bytes)).convert("RGB")
-                img = img.resize((IMG_SIZE, IMG_SIZE))
-                img_arr = np.array(img) / 255.0
-                
-                pred = model.predict(np.expand_dims(img_arr, axis=0))[0]
-                mask = (pred > 0.40).astype(np.uint8)
-                crack_ratio = float(np.sum(mask) / (IMG_SIZE * IMG_SIZE))
-                
-                penalty = int(crack_ratio * 500)
-                health_score = max(0, 100 - penalty)
-                condition = "Critical" if health_score < 60 else ("Fair" if health_score < 90 else "Excellent")
-                logger.info(f"Keras model executed. Crack ratio: {crack_ratio:.4f}, Health Score: {health_score}")
-            except Exception as e:
-                logger.error(f"Error running keras model: {e}")
+        penalty = int(mask_coverage * 500)
+        health_score = max(0, 100 - penalty)
+        condition = "Critical" if health_score < 60 else ("Fair" if health_score < 90 else "Excellent")
+        logger.info(f"Using CV geometric metrics. Mask coverage: {mask_coverage:.4f}, Components: {component_count}, Largest Area: {largest_component_area}, Health Score: {health_score}")
 
         # 2. Use Gemini Vision to classify the defect type based on the Keras findings
         try:
@@ -77,7 +54,7 @@ def assess_condition(state: dict) -> dict:
             if health_score >= 95:
                 prompt = "Analyze this image of a concrete surface. The local segmentation model detected NO significant cracks (Health Score is near perfect). Confirm there is no crack by returning crack_type 'None' and severity 'low'."
             else:
-                prompt = f"Analyze this image of a structural defect. The local AI detected a crack covering {crack_ratio*100:.1f}% of the area. Identify the crack type (e.g., 'Spalling', 'Hairline Crack') and classify its visual severity as 'low', 'medium', or 'high'."
+                prompt = f"Analyze this image of a structural defect. The local AI detected a crack covering {mask_coverage*100:.1f}% of the area, consisting of {component_count} connected components, with the largest component area being {largest_component_area} pixels. Identify the crack type (e.g., 'Spalling', 'Hairline Crack') and classify its visual severity as 'low', 'medium', or 'high'."
             
             msg = HumanMessage(
                 content=[
