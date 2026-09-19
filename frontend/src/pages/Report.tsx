@@ -4,8 +4,9 @@ import ReactMarkdown from 'react-markdown';
 import { Card, CardContent, CardHeader, CardTitle, Button } from '../components/ui';
 import { getAssessment, getReport, AssessmentResponse, ReportResponse } from '../api/inspections';
 import { updateAssessment } from '../api/defects';
-import { ShieldAlert, FileText, Activity, AlertTriangle, ArrowLeft } from 'lucide-react';
+import { ShieldAlert, FileText, Activity, AlertTriangle, ArrowLeft, Clock } from 'lucide-react';
 import { useAuth } from '../hooks/useAuth';
+import { AuditHistoryModal } from '../components/AuditHistoryModal';
 
 export const Report = () => {
   const { user } = useAuth();
@@ -23,6 +24,7 @@ export const Report = () => {
   const [editRecommendation, setEditRecommendation] = useState('');
   const [isUpdating, setIsUpdating] = useState(false);
   const [updateMessage, setUpdateMessage] = useState<{ type: 'success' | 'error', text: string } | null>(null);
+  const [showAuditModal, setShowAuditModal] = useState(false);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -129,9 +131,15 @@ export const Report = () => {
               <span className="text-sm font-medium text-slate-500 uppercase tracking-wider">Severity</span>
               <p className="text-2xl font-semibold capitalize text-slate-900">{assessment.severity}</p>
             </div>
-            <div className="space-y-1">
-              <span className="text-sm font-medium text-slate-500 uppercase tracking-wider">Risk Level</span>
-              <p className="text-2xl font-semibold capitalize text-slate-900">{assessment.risk.replace(/_/g, ' ')}</p>
+            <div className="space-y-1 flex justify-between items-start">
+              <div>
+                <span className="text-sm font-medium text-slate-500 uppercase tracking-wider">Risk Level</span>
+                <p className="text-2xl font-semibold capitalize text-slate-900">{assessment.risk.replace(/_/g, ' ')}</p>
+              </div>
+              <Button variant="outline" size="sm" onClick={() => setShowAuditModal(true)} className="flex items-center gap-2">
+                <Clock className="w-4 h-4" />
+                View History
+              </Button>
             </div>
             <div className="col-span-2 space-y-1 mt-4">
               <span className="text-sm font-medium text-slate-500 uppercase tracking-wider block mb-2">AI-Generated Recommendation</span>
@@ -142,6 +150,13 @@ export const Report = () => {
           </div>
         </CardContent>
       </Card>
+
+      {showAuditModal && (
+        <AuditHistoryModal 
+          assessmentId={assessment.id} 
+          onClose={() => setShowAuditModal(false)} 
+        />
+      )}
 
       <Card>
         <CardHeader className="bg-slate-50 border-b border-slate-100">
