@@ -1,5 +1,5 @@
 import os
-from datetime import datetime
+from datetime import datetime, timezone
 from redis import Redis
 from rq import Queue
 import sys
@@ -42,7 +42,7 @@ def run_analysis_job(job_id: str, test_db=None):
             
         # Transition to PROCESSING
         job.status = "PROCESSING"
-        job.started_at = datetime.utcnow()
+        job.started_at = datetime.now(timezone.utc)
         db.commit()
         
         # Verify related image exists
@@ -50,7 +50,7 @@ def run_analysis_job(job_id: str, test_db=None):
         if not image:
             job.status = "FAILED"
             job.error_message = "NOT_FOUND"
-            job.completed_at = datetime.utcnow()
+            job.completed_at = datetime.now(timezone.utc)
             db.commit()
             return
             
@@ -59,7 +59,7 @@ def run_analysis_job(job_id: str, test_db=None):
         if not inspection:
             job.status = "FAILED"
             job.error_message = "NOT_FOUND"
-            job.completed_at = datetime.utcnow()
+            job.completed_at = datetime.now(timezone.utc)
             db.commit()
             return
         
@@ -76,7 +76,7 @@ def run_analysis_job(job_id: str, test_db=None):
             
             # Transition to COMPLETED
             job.status = "COMPLETED"
-            job.completed_at = datetime.utcnow()
+            job.completed_at = datetime.now(timezone.utc)
             db.commit()
             logger.info(f"Job {job_id} completed successfully.")
             
@@ -84,13 +84,13 @@ def run_analysis_job(job_id: str, test_db=None):
             logger.error(f"Domain error during analysis execution for job {job_id}: {e.code} - {e.message}")
             job.status = "FAILED"
             job.error_message = e.code
-            job.completed_at = datetime.utcnow()
+            job.completed_at = datetime.now(timezone.utc)
             db.commit()
         except Exception as e:
             logger.error(f"Unhandled error during analysis execution for job {job_id}: {e}", exc_info=True)
             job.status = "FAILED"
             job.error_message = "INTERNAL_ERROR"
-            job.completed_at = datetime.utcnow()
+            job.completed_at = datetime.now(timezone.utc)
             db.commit()
             
     finally:

@@ -2,8 +2,8 @@ import os
 import io
 import base64
 import tempfile
+from datetime import datetime, timezone
 from fpdf import FPDF
-from datetime import datetime
 from PIL import Image
 
 class CivilCortexPDF(FPDF):
@@ -115,6 +115,6 @@ def generate_inspection_pdf(inspection):
     pdf.set_font("helvetica", "B", 9)
     pdf.cell(80, 5, "___________________________________", border=False, align="C", new_x="LMARGIN", new_y="NEXT")
     pdf.cell(80, 5, "Lead Structural Engineer Signature", border=False, align="C", new_x="LMARGIN", new_y="NEXT")
-    pdf.cell(80, 5, f"Date: {datetime.utcnow().strftime('%Y-%m-%d')}", border=False, align="C")
+    pdf.cell(80, 5, f"Date: {datetime.now(timezone.utc).strftime('%Y-%m-%d')}", border=False, align="C")
 
     return bytes(pdf.output())
