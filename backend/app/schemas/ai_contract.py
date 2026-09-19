@@ -71,5 +71,7 @@ class AnalysisResult(BaseModel):
     executive_report: Optional[str] = None
     planning: PlanningInformation = Field(default_factory=PlanningInformation)
     rag_evidence: Optional[List[RAGEvidence]] = Field(default=None, description="Structured RAG evidence used in analysis")
+    # Flag so callers can surface a UI notice when no engineering standards were available
+    rag_evidence_available: bool = Field(default=True, description="False when RAG returned no evidence; report lacks standards citations")
     processing_metadata: ProcessingMetadata = Field(default_factory=ProcessingMetadata)
     error: Optional[str] = None

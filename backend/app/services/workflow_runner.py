@@ -20,6 +20,9 @@ def run_analysis(input_data: AnalysisInput) -> AnalysisResult:
         # Inject CV data into LangGraph if possible (LangGraph will populate it, but we can seed it)
         "crack_detected": input_data.cv_output.defect_type == "crack",
         "crack_probability": input_data.cv_output.confidence,
+        "mask_coverage": input_data.cv_output.mask_coverage,
+        "component_count": input_data.cv_output.component_count,
+        "largest_component_area": input_data.cv_output.largest_component_area,
     }
     
     # 2. Execute Graph
@@ -39,6 +42,14 @@ def run_analysis(input_data: AnalysisInput) -> AnalysisResult:
         estimated_cost=final_state.get("estimated_cost")
     )
     
+    rag_available = bool(input_data.rag_evidence)
+    if not rag_available:
+        logger.warning(
+            "event=rag_evidence status=absent "
+            "RAG database returned no engineering standards evidence. "
+            "The AI report will be generated without standards citations and may be less reliable."
+        )
+
     return AnalysisResult(
         defect_detected=final_state.get("crack_detected", input_data.cv_output.defect_type == "crack"),
         defect_probability=final_state.get("crack_probability", input_data.cv_output.confidence),
@@ -50,9 +61,10 @@ def run_analysis(input_data: AnalysisInput) -> AnalysisResult:
         priority=final_state.get("priority"),
         max_days=final_state.get("days"),
         recommendation=final_state.get("recommendation"),
-        executive_report=None, # To be added by a future reporting node if needed
+        executive_report=None,
         planning=planning,
         rag_evidence=input_data.rag_evidence,
+        rag_evidence_available=rag_available,
         processing_metadata={"processing_time_ms": int((end_time - start_time) * 1000)},
         error=None
     )
