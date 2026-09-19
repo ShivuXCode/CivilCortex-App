@@ -97,3 +97,32 @@ def run_analysis_job(job_id: str, test_db=None):
         if not test_db:
             db.close()
         job_id_var.set("")
+
+def reap_stale_jobs():
+    """
+    Find any AnalysisJob stuck in PROCESSING state for more than 10 minutes and mark it FAILED.
+    """
+    from datetime import timedelta
+    db = SessionLocal()
+    try:
+        ten_minutes_ago = datetime.now(timezone.utc) - timedelta(minutes=10)
+        stale_jobs = db.query(AnalysisJob).filter(
+            AnalysisJob.status == "PROCESSING",
+            AnalysisJob.started_at < ten_minutes_ago
+        ).all()
+        
+        count = 0
+        for job in stale_jobs:
+            logger.warning(f"Reaping stale job {job.id} that has been processing since {job.started_at}")
+            job.status = "FAILED"
+            job.error_message = "WORKER_TIMEOUT"
+            job.completed_at = datetime.now(timezone.utc)
+            count += 1
+            
+        if count > 0:
+            db.commit()
+            logger.info(f"Reaped {count} stale jobs.")
+    except Exception as e:
+        logger.error(f"Error while reaping stale jobs: {e}", exc_info=True)
+    finally:
+        db.close()

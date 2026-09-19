@@ -26,7 +26,21 @@ async def lifespan(app: FastAPI):
         logger.error(f"Failed to connect to the database on startup: {e}")
         raise RuntimeError("Startup failed: Database unreachable")
         
+    import asyncio
+    from app.worker import reap_stale_jobs
+    
+    async def periodic_reaper():
+        while True:
+            # Run every 5 minutes
+            await asyncio.sleep(300)
+            # Run in a threadpool to avoid blocking the async event loop with sync SQLAlchemy queries
+            await asyncio.to_thread(reap_stale_jobs)
+
+    reaper_task = asyncio.create_task(periodic_reaper())
+    
     yield
+    
+    reaper_task.cancel()
     
 app = FastAPI(
     title=settings.PROJECT_NAME,
