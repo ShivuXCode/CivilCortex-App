@@ -68,7 +68,12 @@ export const NewInspection = () => {
   const handleStartInspection = async () => {
     if (!selectedBuildingId || !selectedElementId) return;
     try {
-      const insp = await createInspection({ building_id: selectedBuildingId });
+      // Pass structural_element_id so the backend links the image/analysis
+      // to the specific element selected in Step 1 (fixes the element context gap)
+      const insp = await createInspection({
+        building_id: selectedBuildingId,
+        structural_element_id: selectedElementId,
+      });
       setInspectionId(insp.id);
       setStep(2);
     } catch (err) {

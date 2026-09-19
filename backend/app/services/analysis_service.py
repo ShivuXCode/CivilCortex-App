@@ -27,9 +27,22 @@ class AnalysisService:
         inspection = image.inspection
         building = db.query(Building).filter(Building.id == inspection.building_id).first()
         
-        # We don't have a specific structural element linked to an uploaded image in the current schema.
-        # We'll use a placeholder or generic element context for now.
-        # Gap identified: Images are not linked to a specific structural element at upload time.
+        # Resolve the structural element linked to this inspection.
+        # Prior to this fix, element context was hardcoded ("Concrete Structure", "Commercial", etc.)
+        # Now we look up the actual element from the DB using the ID stored on the inspection record.
+        structural_element = None
+        if inspection.structural_element_id:
+            from app.models import StructuralElement
+            structural_element = db.query(StructuralElement).filter(
+                StructuralElement.id == inspection.structural_element_id
+            ).first()
+
+        element_context = ElementContext(
+            element_id=str(structural_element.id) if structural_element else str(image.id),
+            element_type=structural_element.element_type if structural_element else "Unknown Element",
+            building_type=building.building_type if building and hasattr(building, 'building_type') else None,
+            is_load_bearing=structural_element.is_load_bearing if structural_element and hasattr(structural_element, 'is_load_bearing') else True
+        )
         
         # Ensure we have an AnalysisJob to track this
         job = db.query(AnalysisJob).filter(AnalysisJob.image_id == image.id).first()
@@ -78,12 +91,7 @@ class AnalysisService:
                 inspection_id=str(inspection.id),
                 title=f"Inspection for {building.name if building else 'Unknown Building'}"
             ),
-            element=ElementContext(
-                element_id=str(image.id), # Placeholder until proper element linking is fixed in Phase 6+
-                element_type="Concrete Structure", 
-                building_type="Commercial",
-                is_load_bearing=True
-            ),
+            element=element_context,
             observation=ObservationContext(
                 crack_type=cv_result["defect_type"],
                 delay_risk="unknown"
@@ -91,6 +99,9 @@ class AnalysisService:
             cv_output=CVOutputContext(
                 defect_type=cv_result["defect_type"],
                 confidence=cv_result["confidence"],
+                mask_coverage=cv_result.get("mask_coverage"),
+                component_count=cv_result.get("component_count"),
+                largest_component_area=cv_result.get("largest_component_area"),
                 metadata=CVModelMetadata(
                     model_name=cv_result["model_name"],
                     model_version=cv_result["model_version"],
