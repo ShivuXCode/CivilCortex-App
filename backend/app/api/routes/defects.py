@@ -112,12 +112,9 @@ def update_assessment(
     if not assessment:
         raise HTTPException(status_code=404, detail="Assessment not found")
         
-    # Verify ownership through the observation -> defect -> structural_element -> area -> floor -> building
-    if assessment.observation.defect.structural_element:
-        org_id = assessment.observation.defect.structural_element.area.floor.building.organization_id
-    else:
-        # If defect has no structural element, check the inspection's building
-        org_id = assessment.observation.inspection.building.organization_id
+    # Verify ownership strictly through the observation -> inspection -> building path
+    # This guarantees robust IDOR protection without relying on the existence of optional structural elements.
+    org_id = assessment.observation.inspection.building.organization_id
         
     if org_id != current_user.organization_id:
         raise HTTPException(status_code=403, detail="Access denied")
@@ -173,10 +170,7 @@ def get_assessment_audit_logs(
     if not assessment:
         raise HTTPException(status_code=404, detail="Assessment not found")
         
-    if assessment.observation.defect.structural_element:
-        org_id = assessment.observation.defect.structural_element.area.floor.building.organization_id
-    else:
-        org_id = assessment.observation.inspection.building.organization_id
+    org_id = assessment.observation.inspection.building.organization_id
         
     if org_id != current_user.organization_id:
         raise HTTPException(status_code=403, detail="Access denied")

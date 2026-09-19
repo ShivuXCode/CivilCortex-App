@@ -148,6 +148,10 @@ class AnalysisService:
             rag_context_text = None
             if ai_result.rag_evidence:
                 rag_context_text = "\n\n".join([f"Source: {ev.source}\n{ev.text}" for ev in ai_result.rag_evidence])
+                
+            import bleach
+            # Sanitize LLM Markdown to prevent malicious HTML injection
+            safe_recommendation = bleach.clean(ai_result.recommendation) if ai_result.recommendation else None
 
             assessment = Assessment(
                 observation_id=observation.id,
@@ -155,7 +159,7 @@ class AnalysisService:
                 risk=ai_result.risk_level if ai_result.risk_level else "REQUIRES_REVIEW",
                 priority=ai_result.priority,
                 rag_context=rag_context_text,
-                repair_recommendation=ai_result.recommendation
+                repair_recommendation=safe_recommendation
             )
             db.add(assessment)
             db.flush()

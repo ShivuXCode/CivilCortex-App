@@ -1,20 +1,28 @@
 import os
 import cv2
 import numpy as np
-import tensorflow as tf
+import torch
 from pathlib import Path
+from PIL import Image
+
+import segmentation_models_pytorch as smp
+import albumentations as A
+from albumentations.pytorch import ToTensorV2
+
 from app.core.exceptions import ImageProcessingError, CVInferenceError
 from app.core.logger import logger
+from app.core.config import settings
 
-_MODEL_PATH = os.path.join(os.path.dirname(__file__), "../models/civilcortex_best.keras")
+_MODEL_PATH = os.path.join(os.path.dirname(__file__), "../../models/Phase6_ArchDeepLabEff_best.pth")
 
 class MLService:
     _model = None
-    _model_load_attempted = False  # Avoid repeated load attempts on every request
+    _model_load_attempted = False
+    _device = "cuda" if torch.cuda.is_available() else "cpu"
 
     @classmethod
     def get_model(cls):
-        """Load and cache the Keras model. Returns None if the model file is missing."""
+        """Load and cache the PyTorch model. Returns None if the model file is missing."""
         if cls._model_load_attempted:
             return cls._model
         cls._model_load_attempted = True
@@ -23,29 +31,38 @@ class MLService:
             logger.warning(
                 f"ML model file not found at '{_MODEL_PATH}'. "
                 "Analysis will fall back to demo/pipeline mode. "
-                "Place 'civilcortex_best.keras' in backend/models/ to enable real inference."
+                "Place 'Phase6_ArchDeepLabEff_best.pth' in backend/models/ to enable real inference."
             )
             return None
 
         try:
-            def dummy_loss(y_true, y_pred): return y_pred
-            def dummy_metric(y_true, y_pred): return y_pred
-
-            cls._model = tf.keras.models.load_model(_MODEL_PATH, custom_objects={
-                'combined_loss': dummy_loss,
-                'dice_metric': dummy_metric,
-                'iou_metric': dummy_metric
-            }, compile=False)
-            logger.info("ML model loaded successfully.")
+            cls._model = smp.DeepLabV3Plus(
+                encoder_name="efficientnet-b4",
+                encoder_weights=None,
+                in_channels=3,
+                classes=4
+            )
+            cls._model.load_state_dict(torch.load(_MODEL_PATH, map_location=cls._device, weights_only=True))
+            cls._model.to(cls._device)
+            cls._model.eval()
+            logger.info(f"PyTorch ML model loaded successfully on {cls._device}.")
         except Exception as e:
-            logger.error(f"Failed to load ML model: {e}")
+            logger.error(f"Failed to load PyTorch ML model: {e}")
             raise CVInferenceError(f"Failed to load ML model: {e}")
         return cls._model
 
     @staticmethod
+    def get_preprocessing(resolution=384):
+        return A.Compose([
+            A.Resize(resolution, resolution),
+            A.Normalize(mean=(0.485, 0.456, 0.406), std=(0.229, 0.224, 0.225)),
+            ToTensorV2()
+        ])
+
+    @staticmethod
     def analyze_image(image_path: str) -> dict:
         """
-        Analyzes an image using the real Keras segmentation model.
+        Analyzes an image using the real PyTorch segmentation model.
         Falls back to demo-mode pipeline inference if the model is unavailable.
         """
         if not os.path.exists(image_path):
@@ -74,17 +91,9 @@ class MLService:
 
         # --- Real model inference ---
         try:
-            img = cv2.imread(image_path)
-            if img is None:
-                raise ImageProcessingError("Invalid image or unsupported format")
-
-            img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
-            img_resized = cv2.resize(img, (384, 384))
-
-            # Normalize to [0, 1]
-            img_normalized = img_resized.astype(np.float32) / 255.0
-
-            input_tensor = np.expand_dims(img_normalized, axis=0) # (1, 384, 384, 3)
+            image = np.array(Image.open(image_path).convert("RGB"))
+            preprocess = MLService.get_preprocessing(resolution=384)
+            tensor = preprocess(image=image)['image'].unsqueeze(0).to(MLService._device)
         except Exception as e:
             if isinstance(e, ImageProcessingError):
                 raise
@@ -92,38 +101,60 @@ class MLService:
             raise ImageProcessingError(f"Failed to process image: {e}")
 
         try:
-            mask = model.predict(input_tensor, verbose=0)
+            with torch.no_grad():
+                logits = model(tensor)
+                # Argmax for prediction classes
+                prediction = torch.argmax(logits, dim=1).squeeze(0).cpu().numpy()
 
-            # 1. Binarize Mask (Probability threshold)
-            prob_threshold = 0.5
-            binary_mask = (mask[0, :, :, 0] > prob_threshold).astype(np.uint8)
+            # Class mapping: 0=bg, 1=crack, 2=spalling, 3=corrosion
+            DEFECT_CLASSES = {1: "crack", 2: "spalling", 3: "corrosion"}
 
-            # 2. Extract Connected Components
-            num_labels, labels, stats, centroids = cv2.connectedComponentsWithStats(binary_mask, connectivity=8)
+            total_pixels = prediction.size
+            best_defect_type = "none"
+            best_confidence = 0.0
+            best_mask_coverage = 0.0
+            best_component_count = 0
+            best_largest_area = 0
 
-            # 3. Compute Spatial Metrics
-            total_pixels = binary_mask.size
-            mask_coverage = float(np.sum(binary_mask) / total_pixels)
+            # Analyze each defect class independently
+            for class_idx, class_name in DEFECT_CLASSES.items():
+                binary_mask = (prediction == class_idx).astype(np.uint8)
+                
+                if np.sum(binary_mask) == 0:
+                    continue
 
-            # Filter components (ignore background component 0)
-            MIN_AREA_THRESHOLD = 50
-            valid_components = [s[cv2.CC_STAT_AREA] for i, s in enumerate(stats) if i > 0 and s[cv2.CC_STAT_AREA] >= MIN_AREA_THRESHOLD]
-
-            component_count = len(valid_components)
-            largest_component_area = int(max(valid_components)) if component_count > 0 else 0
-
-            # 4. Defect Decision
-            defect_score = float(largest_component_area / total_pixels) if component_count > 0 else 0.0
-            defect_type = "crack" if component_count > 0 else "none"
+                num_labels, labels, stats, centroids = cv2.connectedComponentsWithStats(binary_mask, connectivity=8)
+                
+                # Ignore background component
+                MIN_AREA_THRESHOLD = settings.ML_MIN_AREA_THRESHOLD
+                valid_components = [s[cv2.CC_STAT_AREA] for i, s in enumerate(stats) if i > 0 and s[cv2.CC_STAT_AREA] >= MIN_AREA_THRESHOLD]
+                
+                if not valid_components:
+                    continue
+                    
+                component_count = len(valid_components)
+                largest_area = int(max(valid_components))
+                mask_coverage = float(np.sum(binary_mask) / total_pixels)
+                
+                # Confidence score based on largest area ratio (as in the original code)
+                defect_score = float(largest_area / total_pixels)
+                
+                # Select the dominant defect type (largest area)
+                if largest_area > best_largest_area:
+                    best_defect_type = class_name
+                    best_confidence = defect_score
+                    best_mask_coverage = mask_coverage
+                    best_component_count = component_count
+                    best_largest_area = largest_area
 
             return {
-                "defect_type": defect_type,
-                "confidence": defect_score,
-                "mask_coverage": mask_coverage,
-                "component_count": component_count,
-                "largest_component_area": largest_component_area,
-                "model_name": "civilcortex_segmentation",
-                "model_version": "v1.0",
+                "defect_type": best_defect_type,
+                "confidence": best_confidence,
+                "mask_coverage": best_mask_coverage,
+                "component_count": best_component_count,
+                "largest_component_area": best_largest_area,
+                "model_name": "civilcortex_deeplabv3plus",
+                "model_version": "v2.0",
                 "model_status": "PRODUCTION"
             }
         except Exception as e:

@@ -48,6 +48,9 @@ class Settings(BaseSettings):
     # Demo Mode configuration
     DEMO_MODE: bool = True
     DEFAULT_DEMO_SCENARIO: str = "hairline_crack"
+    
+    # ML Thresholds
+    ML_MIN_AREA_THRESHOLD: int = 50
 
     model_config = SettingsConfigDict(case_sensitive=True, env_file=".env", extra="ignore")
 
