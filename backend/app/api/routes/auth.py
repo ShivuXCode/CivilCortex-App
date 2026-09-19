@@ -4,7 +4,7 @@ from fastapi.security import OAuth2PasswordRequestForm
 from app.db.session import get_db
 from app.schemas.user import UserCreate, UserResponse, Token
 from app.services.auth_service import AuthService
-from app.api.deps import get_current_user, oauth2_scheme
+from app.api.deps import get_current_user, oauth2_scheme, RoleChecker
 from app.models import User
 from app.core.limiter import limiter
 from app.core.token_blacklist import blacklist_token
@@ -107,3 +107,30 @@ def reset_password(request: Request, data: ResetPasswordRequest, db: Session = D
     user.hashed_password = get_password_hash(data.new_password)
     db.commit()
     return {"message": "Password updated successfully"}
+
+class UserRoleUpdate(BaseModel):
+    role: str
+
+@router.patch("/users/{user_id}/role", response_model=UserResponse)
+@limiter.limit("5/minute")
+def update_user_role(
+    request: Request,
+    user_id: str, 
+    data: UserRoleUpdate, 
+    db: Session = Depends(get_db), 
+    current_user: User = Depends(RoleChecker(["ADMIN"]))
+):
+    if data.role not in ["INSPECTOR", "ENGINEER", "ADMIN"]:
+        raise HTTPException(status_code=400, detail="Invalid role")
+        
+    target_user = db.query(User).filter(User.id == user_id).first()
+    if not target_user:
+        raise HTTPException(status_code=404, detail="User not found")
+        
+    if target_user.organization_id != current_user.organization_id:
+        raise HTTPException(status_code=403, detail="Access denied. User belongs to a different organization.")
+        
+    target_user.role = data.role
+    db.commit()
+    db.refresh(target_user)
+    return target_user
