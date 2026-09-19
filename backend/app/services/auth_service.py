@@ -2,7 +2,7 @@ from sqlalchemy.orm import Session
 from fastapi import HTTPException, status
 from app.models.hierarchy import User
 from app.schemas.user import UserCreate
-from app.core.security import get_password_hash, verify_password, create_access_token
+from app.core.security import get_password_hash, verify_password, create_access_token, create_refresh_token
 
 class AuthService:
     @staticmethod
@@ -47,10 +47,16 @@ class AuthService:
         # Use 'sub' (RFC 7519 standard claim) as the primary user identifier.
         # This allows O(1) indexed DB lookup by primary key instead of a
         # string scan on the email column.
-        access_token = create_access_token(data={
+        token_data = {
             "sub": str(user.id),
             "email": user.email,
             "role": user.role,
             "organization_id": str(user.organization_id)
-        })
-        return {"access_token": access_token, "token_type": "bearer"}
+        }
+        access_token = create_access_token(data=token_data)
+        refresh_token = create_refresh_token(data=token_data)
+        return {
+            "access_token": access_token, 
+            "refresh_token": refresh_token,
+            "token_type": "bearer"
+        }

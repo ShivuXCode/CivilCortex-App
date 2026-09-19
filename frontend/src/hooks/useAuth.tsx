@@ -4,7 +4,7 @@ import { getMe, User } from '../api/auth';
 interface AuthContextType {
   user: User | null;
   loading: boolean;
-  loginSuccess: (token: string) => void;
+  loginSuccess: (accessToken: string, refreshToken?: string) => void;
   logout: () => void;
 }
 
@@ -40,14 +40,18 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   }, []);
 
-  const loginSuccess = (token: string) => {
-    localStorage.setItem('civilcortex_token', token);
+  const loginSuccess = (accessToken: string, refreshToken?: string) => {
+    localStorage.setItem('civilcortex_token', accessToken);
+    if (refreshToken) {
+      localStorage.setItem('civilcortex_refresh_token', refreshToken);
+    }
     setLoading(true);
     fetchUser();
   };
 
   const logout = () => {
     localStorage.removeItem('civilcortex_token');
+    localStorage.removeItem('civilcortex_refresh_token');
     setUser(null);
     window.location.href = '/login';
   };

@@ -19,7 +19,7 @@ export const Login = () => {
 
     try {
       const data = await login(email, password);
-      loginSuccess(data.access_token);
+      loginSuccess(data.access_token, data.refresh_token);
       navigate('/');
     } catch (err: any) {
       if (err.response?.status === 400 || err.response?.status === 401) {

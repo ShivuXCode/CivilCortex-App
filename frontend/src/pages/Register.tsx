@@ -25,7 +25,7 @@ export const Register = () => {
       await registerApi(email, password, inviteToken || undefined);
       // 2. Automatically log them in
       const data = await login(email, password);
-      loginSuccess(data.access_token);
+      loginSuccess(data.access_token, data.refresh_token);
       navigate('/');
     } catch (err: any) {
       if (err.response?.data?.detail) {

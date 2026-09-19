@@ -24,12 +24,39 @@ apiClient.interceptors.request.use(
 // Response interceptor to handle unauthenticated sessions and standardize errors
 apiClient.interceptors.response.use(
   (response) => response,
-  (error) => {
-    // Check if it's an unauthenticated error
-    if (error.response?.status === 401) {
+  async (error) => {
+    const originalRequest = error.config;
+    
+    // Check if it's an unauthenticated error and we haven't retried yet
+    if (error.response?.status === 401 && !originalRequest._retry) {
+      originalRequest._retry = true;
+      const refreshTokenValue = localStorage.getItem('civilcortex_refresh_token');
+      
+      if (refreshTokenValue) {
+        try {
+          // Use axios directly to avoid interceptor loops
+          const response = await axios.post(`${API_BASE_URL}/auth/refresh`, {
+            refresh_token: refreshTokenValue
+          });
+          
+          if (response.data?.access_token) {
+            localStorage.setItem('civilcortex_token', response.data.access_token);
+            if (response.data.refresh_token) {
+              localStorage.setItem('civilcortex_refresh_token', response.data.refresh_token);
+            }
+            originalRequest.headers.Authorization = `Bearer ${response.data.access_token}`;
+            return apiClient(originalRequest);
+          }
+        } catch (refreshError) {
+          // Refresh failed, fall through to logout
+          console.error("Token refresh failed", refreshError);
+        }
+      }
+      
+      // If no refresh token or refresh failed, logout
       localStorage.removeItem('civilcortex_token');
-      // Redirect to login if not already there
-      if (window.location.pathname !== '/login') {
+      localStorage.removeItem('civilcortex_refresh_token');
+      if (window.location.pathname !== '/login' && window.location.pathname !== '/register') {
         window.location.href = '/login';
       }
     }

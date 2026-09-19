@@ -34,6 +34,13 @@ export const generateInvite = async () => {
   return response.data;
 };
 
+export const refreshToken = async (token: string) => {
+  const response = await apiClient.post('/auth/refresh', {
+    refresh_token: token
+  });
+  return response.data;
+};
+
 export const getMe = async () => {
   const response = await apiClient.get('/auth/me');
   return response.data;

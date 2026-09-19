@@ -49,3 +49,61 @@ def logout(
     """Revoke the current access token so it cannot be reused after logout."""
     blacklist_token(token)
     return {"message": "Successfully logged out"}
+
+from pydantic import BaseModel
+class RefreshRequest(BaseModel):
+    refresh_token: str
+
+@router.post("/refresh", response_model=Token)
+@limiter.limit("20/minute")
+def refresh_token(request: Request, data: RefreshRequest, db: Session = Depends(get_db)):
+    import jwt
+    from app.core.config import settings
+    try:
+        payload = jwt.decode(data.refresh_token, settings.SECRET_KEY, algorithms=[settings.ALGORITHM])
+        if payload.get("type") != "refresh":
+            raise HTTPException(status_code=401, detail="Invalid token type")
+            
+        user_id = payload.get("sub")
+        user = db.query(User).filter(User.id == user_id).first()
+        if not user:
+            raise HTTPException(status_code=401, detail="User not found")
+            
+        return AuthService.create_token_for_user(user)
+    except jwt.PyJWTError:
+        raise HTTPException(status_code=401, detail="Invalid or expired refresh token")
+
+class ForgotPasswordRequest(BaseModel):
+    email: str
+
+@router.post("/forgot-password")
+@limiter.limit("5/minute")
+def forgot_password(request: Request, data: ForgotPasswordRequest, db: Session = Depends(get_db)):
+    user = db.query(User).filter(User.email == data.email).first()
+    if user:
+        from app.core.security import create_password_reset_token
+        reset_token = create_password_reset_token(user.email)
+        # In a real app, send an email here. For now, print to console.
+        print(f"PASSWORD RESET LINK FOR {user.email}: http://localhost:5173/reset-password?token={reset_token}")
+    # Always return success to prevent email enumeration
+    return {"message": "If the email is registered, a password reset link has been sent."}
+
+class ResetPasswordRequest(BaseModel):
+    token: str
+    new_password: str
+
+@router.post("/reset-password")
+@limiter.limit("5/minute")
+def reset_password(request: Request, data: ResetPasswordRequest, db: Session = Depends(get_db)):
+    from app.core.security import verify_password_reset_token, get_password_hash
+    email = verify_password_reset_token(data.token)
+    if not email:
+        raise HTTPException(status_code=400, detail="Invalid or expired reset token")
+        
+    user = db.query(User).filter(User.email == email).first()
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+        
+    user.hashed_password = get_password_hash(data.new_password)
+    db.commit()
+    return {"message": "Password updated successfully"}
