@@ -33,9 +33,13 @@ class AuthService:
 
     @staticmethod
     def create_token_for_user(user: User):
+        # Use 'sub' (RFC 7519 standard claim) as the primary user identifier.
+        # This allows O(1) indexed DB lookup by primary key instead of a
+        # string scan on the email column.
         access_token = create_access_token(data={
+            "sub": str(user.id),
             "email": user.email,
             "role": user.role,
-            "organization_id": user.organization_id
+            "organization_id": str(user.organization_id)
         })
         return {"access_token": access_token, "token_type": "bearer"}
