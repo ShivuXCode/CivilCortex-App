@@ -11,8 +11,8 @@ def generate_uuid():
 class Inspection(Base):
     __tablename__ = "inspections"
     id = Column(String, primary_key=True, default=generate_uuid)
-    building_id = Column(String, ForeignKey("buildings.id"), nullable=False)
-    inspector_id = Column(String, ForeignKey("users.id"), nullable=False)
+    building_id = Column(String, ForeignKey("buildings.id"), nullable=False, index=True)
+    inspector_id = Column(String, ForeignKey("users.id"), nullable=False, index=True)
     notes = Column(String, nullable=True)
     created_at = Column(DateTime, default=datetime.utcnow)
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
