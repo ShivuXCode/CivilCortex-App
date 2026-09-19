@@ -39,9 +39,10 @@ export const NewInspection = () => {
     }
   }, [selectedBuildingId]);
 
-  // Polling Effect
+  // Polling Effect with 90-second timeout to prevent infinite loading states
   useEffect(() => {
     let interval: ReturnType<typeof setInterval>;
+    let timeoutHandle: ReturnType<typeof setTimeout>;
 
     const pollJob = async () => {
       if (!jobId || jobStatus === 'COMPLETED' || jobStatus === 'FAILED') return;
@@ -58,10 +59,19 @@ export const NewInspection = () => {
 
     if (jobId && jobStatus !== 'COMPLETED' && jobStatus !== 'FAILED') {
       interval = setInterval(pollJob, 2000);
+      // Safety timeout: after 90 seconds stop polling and show a stuck-job message
+      timeoutHandle = setTimeout(() => {
+        clearInterval(interval);
+        if (jobStatus !== 'COMPLETED' && jobStatus !== 'FAILED') {
+          setJobStatus('FAILED');
+          setJobError('Analysis is taking too long. The job may be stuck. Please try again or contact support.');
+        }
+      }, 90000);
     }
 
     return () => {
       if (interval) clearInterval(interval);
+      if (timeoutHandle) clearTimeout(timeoutHandle);
     };
   }, [jobId, jobStatus]);
 
