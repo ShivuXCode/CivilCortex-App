@@ -123,9 +123,68 @@ def update_assessment(
         raise HTTPException(status_code=403, detail="Access denied")
         
     update_data = assessment_update.model_dump(exclude_unset=True)
+    if not update_data:
+        return assessment
+        
+    from app.models.audit import AuditLog
+    
+    # Capture previous state safely
+    previous_state = {}
+    for key in update_data.keys():
+        val = getattr(assessment, key)
+        # Convert enums or complex types if necessary, though SQLAlchemy standard columns serialize well
+        previous_state[key] = str(val) if val is not None else None
+        
     for key, value in update_data.items():
         setattr(assessment, key, value)
+        
+    # Capture new state
+    new_state = {}
+    for key in update_data.keys():
+        val = getattr(assessment, key)
+        new_state[key] = str(val) if val is not None else None
+        
+    # Create AuditLog entry
+    audit_log = AuditLog(
+        user_id=current_user.id,
+        entity_type="ASSESSMENT",
+        entity_id=assessment.id,
+        action="UPDATE",
+        previous_state=previous_state,
+        new_state=new_state
+    )
+    db.add(audit_log)
         
     db.commit()
     db.refresh(assessment)
     return assessment
+
+@router.get("/assessments/{assessment_id}/audit-logs")
+def get_assessment_audit_logs(
+    assessment_id: str,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
+    # Verify access to the assessment
+    assessment = db.query(Assessment).options(
+        joinedload(Assessment.observation).joinedload(CrackObservation.defect).joinedload(Defect.structural_element).joinedload(StructuralElement.area).joinedload(Area.floor).joinedload(Floor.building),
+        joinedload(Assessment.observation).joinedload(CrackObservation.inspection).joinedload(Inspection.building)
+    ).filter(Assessment.id == assessment_id).first()
+    if not assessment:
+        raise HTTPException(status_code=404, detail="Assessment not found")
+        
+    if assessment.observation.defect.structural_element:
+        org_id = assessment.observation.defect.structural_element.area.floor.building.organization_id
+    else:
+        org_id = assessment.observation.inspection.building.organization_id
+        
+    if org_id != current_user.organization_id:
+        raise HTTPException(status_code=403, detail="Access denied")
+        
+    from app.models.audit import AuditLog
+    logs = db.query(AuditLog).filter(
+        AuditLog.entity_type == "ASSESSMENT",
+        AuditLog.entity_id == assessment_id
+    ).order_by(AuditLog.created_at.desc()).all()
+    
+    return logs
