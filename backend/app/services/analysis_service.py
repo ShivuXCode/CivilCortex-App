@@ -47,12 +47,16 @@ class AnalysisService:
         # Ensure we have an AnalysisJob to track this
         job = db.query(AnalysisJob).filter(AnalysisJob.image_id == image.id).first()
         if not job:
-            job = AnalysisJob(image_id=image.id, status="PROCESSING", started_at=datetime.utcnow())
+            from datetime import timezone
+            job = AnalysisJob(image_id=image.id, status="PROCESSING", started_at=datetime.now(timezone.utc))
             db.add(job)
         else:
+            from datetime import timezone
             job.status = "PROCESSING"
-            job.started_at = datetime.utcnow()
-        db.commit()
+            job.started_at = datetime.now(timezone.utc)
+        # Flush so the PROCESSING state is visible, but do NOT commit yet.
+        # The worker is the sole owner of the final COMPLETED/FAILED commit.
+        db.flush()
 
         # We will not catch exceptions here and set job.status = FAILED.
         # The worker or route calling this should handle CivilCortexError and mark the job.
@@ -116,37 +120,35 @@ class AnalysisService:
         logger.info(f"event=analysis_stage stage=LLM status=started")
         ai_result = run_analysis(input_data)
         
-        # 6. Persist Results
+        # 6. Persist Defect / Assessment records (does NOT manage job status)
+        # Job lifecycle (COMPLETED / FAILED) is the worker's sole responsibility.
+        # Using flush() here makes the records available within this transaction
+        # but leaves the final commit to the caller (worker.py) to avoid
+        # double-commit races and preserve single-responsibility principle.
         logger.info(f"event=analysis_stage stage=PERSISTENCE status=started")
-        
-        # Update AnalysisJob
-        job.status = "COMPLETED"
-        job.completed_at = datetime.utcnow()
-        
-        # Persist Defect/Assessment if defect detected
+
         if ai_result.defect_detected:
-            # Create a Defect with structural_element_id=None (allowed by our new migration)
+            # Link defect to the resolved structural element when available
             defect = Defect(
-                structural_element_id=None,
+                structural_element_id=str(structural_element.id) if structural_element else None,
                 defect_type=cv_result["defect_type"],
                 status="CANDIDATE"
             )
             db.add(defect)
-            db.flush() # To get defect.id
-            
+            db.flush()  # Get defect.id
+
             observation = CrackObservation(
                 defect_id=defect.id,
                 inspection_id=inspection.id,
                 image_id=image.id
             )
             db.add(observation)
-            db.flush() # To get observation.id
-            
-            # Use the first piece of RAG evidence if available, or just join them
+            db.flush()  # Get observation.id
+
             rag_context_text = None
             if ai_result.rag_evidence:
                 rag_context_text = "\n\n".join([f"Source: {ev.source}\n{ev.text}" for ev in ai_result.rag_evidence])
-            
+
             assessment = Assessment(
                 observation_id=observation.id,
                 severity=ai_result.severity if ai_result.severity else "UNKNOWN",
@@ -156,8 +158,8 @@ class AnalysisService:
                 repair_recommendation=ai_result.recommendation
             )
             db.add(assessment)
-            
-        db.commit()
-        
-        # Return result mapped back to a dict for the API response, or the Pydantic model directly
+            db.flush()
+
+        # Return result — do NOT call db.commit() here. The worker commits.
         return ai_result.model_dump()
+
