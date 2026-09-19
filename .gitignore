@@ -6,8 +6,10 @@ __pycache__/
 # C extensions
 *.so
 
-# Environments
+# Environments — never commit real secrets
+# .env.example IS intentionally tracked (contains only placeholder values)
 .env
+backend/.env
 .venv
 env/
 venv/
