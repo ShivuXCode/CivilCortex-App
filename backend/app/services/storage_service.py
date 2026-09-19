@@ -11,10 +11,10 @@ import urllib3
 
 class StorageService:
     def __init__(self):
-        # Determine if we are testing/mocking
         self.client = None
         self.bucket_name = settings.MINIO_BUCKET_NAME
-        
+        self._available = False
+
         try:
             self.client = Minio(
                 settings.MINIO_ENDPOINT,
@@ -28,8 +28,21 @@ class StorageService:
             # Try to make the bucket if it doesn't exist
             if not self.client.bucket_exists(self.bucket_name):
                 self.client.make_bucket(self.bucket_name)
+            self._available = True
+            logger.info("StorageService: MinIO connection established successfully.")
         except Exception as e:
-            logger.warning(f"MinIO client initialization failed: {e}")
+            # Re-raise as a domain error so it surfaces at startup or first use.
+            # Previously this was swallowed (logger.warning only), making root-cause
+            # diagnosis very difficult in production.
+            logger.error(f"StorageService: MinIO initialization failed: {e}")
+            raise StorageError(f"MinIO initialization failed: {e}")
+
+    def health_check(self) -> bool:
+        """Return True if the storage backend is reachable and the bucket exists."""
+        try:
+            return self._available and self.client is not None and self.client.bucket_exists(self.bucket_name)
+        except Exception:
+            return False
 
     def upload_file(self, file_obj: BinaryIO, object_key: str, file_size: int, content_type: str = "application/octet-stream") -> str:
         """Uploads a file object to MinIO."""
