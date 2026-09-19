@@ -47,6 +47,19 @@ export const Dashboard = () => {
     return <div className="p-8 text-slate-500">Loading dashboard...</div>;
   }
 
+  const handleGenerateInvite = async () => {
+    try {
+      const { generateInvite } = await import('../api/auth');
+      const data = await generateInvite();
+      const inviteUrl = `${window.location.origin}/register?invite=${data.invite_token}`;
+      await navigator.clipboard.writeText(inviteUrl);
+      alert('Invite link copied to clipboard!');
+    } catch (err) {
+      console.error('Failed to generate invite link', err);
+      alert('Failed to generate invite link. Please try again.');
+    }
+  };
+
   return (
     <div className="space-y-6">
       <div>
@@ -95,6 +108,9 @@ export const Dashboard = () => {
             </Button>
             <Button variant="secondary" onClick={() => navigate('/buildings')} className="justify-start">
               View Buildings
+            </Button>
+            <Button variant="outline" onClick={handleGenerateInvite} className="justify-start text-blue-600 border-blue-200 hover:bg-blue-50">
+              Generate Org Invite Link
             </Button>
           </CardContent>
         </Card>

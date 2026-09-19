@@ -16,6 +16,16 @@ router = APIRouter()
 def register(request: Request, user_in: UserCreate, db: Session = Depends(get_db)):
     return AuthService.create_user(db, user_in)
 
+@router.post("/invite")
+@limiter.limit("5/minute")
+def generate_invite(
+    request: Request, 
+    current_user: User = Depends(get_current_user)
+):
+    from app.core.security import create_invite_token
+    token = create_invite_token(str(current_user.organization_id))
+    return {"invite_token": token}
+
 @router.post("/login", response_model=Token)
 @limiter.limit("10/minute")
 def login(request: Request, db: Session = Depends(get_db), form_data: OAuth2PasswordRequestForm = Depends()):

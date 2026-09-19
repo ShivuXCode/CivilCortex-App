@@ -10,9 +10,20 @@ class AuthService:
         user = db.query(User).filter(User.email == user_in.email).first()
         if user:
             raise HTTPException(status_code=400, detail="Email already registered")
+            
         import uuid
+        from app.core.security import decode_invite_token
+        
+        org_id = None
+        if user_in.invite_token:
+            decoded_org = decode_invite_token(user_in.invite_token)
+            if not decoded_org:
+                raise HTTPException(status_code=400, detail="Invalid or expired invite token")
+            org_id = decoded_org
+        else:
+            org_id = str(uuid.uuid4())
+            
         hashed_password = get_password_hash(user_in.password)
-        org_id = str(uuid.uuid4())
         db_user = User(
             email=user_in.email, 
             hashed_password=hashed_password,

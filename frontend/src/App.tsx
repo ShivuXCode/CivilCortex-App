@@ -33,11 +33,13 @@ const Placeholder = ({ title }: { title: string }) => (
   </div>
 );
 
+import { Register } from './pages/Register';
+
 function AppRoutes() {
   return (
     <Routes>
       <Route path="/login" element={<Login />} />
-      
+      <Route path="/register" element={<Register />} />
       <Route path="/" element={<PrivateRoute><DashboardLayout /></PrivateRoute>}>
         <Route index element={<Navigate to="/dashboard" replace />} />
         <Route path="dashboard" element={<Dashboard />} />

@@ -20,6 +20,20 @@ export const login = async (email: string, password: string) => {
   return response.data;
 };
 
+export const register = async (email: string, password: string, inviteToken?: string) => {
+  const response = await apiClient.post('/auth/register', {
+    email,
+    password,
+    invite_token: inviteToken || undefined
+  });
+  return response.data;
+};
+
+export const generateInvite = async () => {
+  const response = await apiClient.post('/auth/invite');
+  return response.data;
+};
+
 export const getMe = async () => {
   const response = await apiClient.get('/auth/me');
   return response.data;

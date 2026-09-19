@@ -1,16 +1,19 @@
-import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import React, { useState, useEffect } from 'react';
+import { useNavigate, useSearchParams, Link } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
-import { login } from '../api/auth';
+import { register as registerApi, login } from '../api/auth';
 import { Button, Input, Card, CardContent, CardHeader, CardTitle } from '../components/ui';
 
-export const Login = () => {
+export const Register = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  
   const { loginSuccess } = useAuth();
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const inviteToken = searchParams.get('invite');
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -18,14 +21,17 @@ export const Login = () => {
     setIsLoading(true);
 
     try {
+      // 1. Register the user
+      await registerApi(email, password, inviteToken || undefined);
+      // 2. Automatically log them in
       const data = await login(email, password);
       loginSuccess(data.access_token);
       navigate('/');
     } catch (err: any) {
-      if (err.response?.status === 400 || err.response?.status === 401) {
-        setError('Incorrect email or password.');
+      if (err.response?.data?.detail) {
+        setError(err.response.data.detail);
       } else {
-        setError('Unable to connect to CivilCortex. Please check that the backend is running.');
+        setError('Unable to register. Please try again.');
       }
     } finally {
       setIsLoading(false);
@@ -37,7 +43,9 @@ export const Login = () => {
       <Card className="w-full max-w-md">
         <CardHeader className="text-center pb-8 pt-8">
           <CardTitle className="text-3xl font-bold tracking-tight text-slate-900">CivilCortex</CardTitle>
-          <p className="text-sm text-slate-500 mt-2">Sign in to your engineering account</p>
+          <p className="text-sm text-slate-500 mt-2">
+            {inviteToken ? 'Join your organization' : 'Create a new organization account'}
+          </p>
         </CardHeader>
         <CardContent>
           <form onSubmit={handleSubmit} className="space-y-4">
@@ -71,17 +79,20 @@ export const Login = () => {
                 onChange={(e) => setPassword(e.target.value)}
                 required
                 disabled={isLoading}
+                minLength={8}
               />
+              <p className="text-xs text-slate-500">Must be at least 8 characters</p>
             </div>
             <Button type="submit" className="w-full mt-6" disabled={isLoading}>
-              {isLoading ? 'Signing in...' : 'Sign in'}
+              {isLoading ? 'Creating account...' : 'Create Account'}
             </Button>
+            
             <div className="text-center mt-4 pt-4 border-t border-slate-100">
               <p className="text-sm text-slate-500">
-                Don't have an account?{' '}
-                <a href="/register" className="text-blue-600 hover:underline">
-                  Register
-                </a>
+                Already have an account?{' '}
+                <Link to="/login" className="text-blue-600 hover:underline">
+                  Sign in
+                </Link>
               </p>
             </div>
           </form>
