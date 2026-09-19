@@ -42,7 +42,8 @@ class LLMSynthesizer:
         """
         
         try:
-            llm = ChatGoogleGenerativeAI(model="gemini-3.6-flash", temperature=0.2)
+            # gemini-2.0-flash: correct model name (gemini-3.6-flash does not exist)
+            llm = ChatGoogleGenerativeAI(model="gemini-2.0-flash", temperature=0.2)
             structured_llm = llm.with_structured_output(RecommendationResponse)
             
             response = structured_llm.invoke(prompt)
