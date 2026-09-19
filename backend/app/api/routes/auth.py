@@ -82,9 +82,42 @@ def forgot_password(request: Request, data: ForgotPasswordRequest, db: Session =
     user = db.query(User).filter(User.email == data.email).first()
     if user:
         from app.core.security import create_password_reset_token
+        import smtplib
+        import os
+        from email.mime.text import MIMEText
+        from email.mime.multipart import MIMEMultipart
+        
         reset_token = create_password_reset_token(user.email)
-        # In a real app, send an email here. For now, print to console.
-        print(f"PASSWORD RESET LINK FOR {user.email}: http://localhost:5173/reset-password?token={reset_token}")
+        reset_link = f"http://localhost:5173/reset-password?token={reset_token}"
+        
+        smtp_host = os.environ.get("SMTP_HOST", "localhost")
+        smtp_port = int(os.environ.get("SMTP_PORT", 1025))
+        mail_from = os.environ.get("MAIL_FROM", "noreply@civilcortex.com")
+        
+        msg = MIMEMultipart()
+        msg["From"] = mail_from
+        msg["To"] = user.email
+        msg["Subject"] = "CivilCortex Password Reset Request"
+        
+        body = f"""
+        Hello,
+        
+        You requested a password reset for your CivilCortex account.
+        Please click the link below to reset your password:
+        
+        {reset_link}
+        
+        If you did not request this, please ignore this email.
+        """
+        msg.attach(MIMEText(body, "plain"))
+        
+        try:
+            with smtplib.SMTP(smtp_host, smtp_port) as server:
+                server.send_message(msg)
+            print(f"Successfully sent reset email to {user.email}")
+        except Exception as e:
+            print(f"Failed to send email: {e}")
+            
     # Always return success to prevent email enumeration
     return {"message": "If the email is registered, a password reset link has been sent."}
 

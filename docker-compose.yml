@@ -8,7 +8,7 @@ services:
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
       POSTGRES_DB: ${POSTGRES_DB}
     ports:
-      - "5433:5432"
+      - "5434:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
     restart: always
@@ -20,7 +20,7 @@ services:
     restart: always
 
   minio:
-    image: minio/minio
+    image: quay.io/minio/minio
     ports:
       - "9000:9000"
       - "9001:9001"
@@ -37,17 +37,37 @@ services:
       context: ./backend
       dockerfile: Dockerfile
     ports:
-      - "8000:8000"
+      - "8001:8000"
     volumes:
       - ./backend/chroma_db:/app/chroma_db
     environment:
       - GEMINI_API_KEY=${GEMINI_API_KEY}
       - DATABASE_URL=${DATABASE_URL}
       - REDIS_URL=${REDIS_URL}
+      - SECRET_KEY=${SECRET_KEY}
+      - ENVIRONMENT=${ENVIRONMENT}
+      - BACKEND_CORS_ORIGINS=${BACKEND_CORS_ORIGINS}
+      - MINIO_ENDPOINT=minio:9000
+      - MINIO_ROOT_USER=${MINIO_ROOT_USER}
+      - MINIO_ROOT_PASSWORD=${MINIO_ROOT_PASSWORD}
+      - MINIO_SECURE=false
+      - MINIO_BUCKET_NAME=${MINIO_BUCKET_NAME}
+      - DEMO_MODE=${DEMO_MODE}
+      - SMTP_HOST=mailhog
+      - SMTP_PORT=1025
+      - MAIL_FROM=noreply@civilcortex.com
     depends_on:
       - db
       - redis
       - minio
+      - mailhog
+    restart: always
+
+  mailhog:
+    image: mailhog/mailhog:latest
+    ports:
+      - "1025:1025" # SMTP server
+      - "8025:8025" # Web UI
     restart: always
 
   frontend:
@@ -55,7 +75,7 @@ services:
       context: ./frontend
       dockerfile: Dockerfile
     ports:
-      - "80:80"
+      - "8080:80"
     depends_on:
       - backend
     restart: always
