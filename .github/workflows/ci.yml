@@ -1,0 +1,81 @@
+name: CivilCortex CI
+
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+
+jobs:
+  backend-test:
+    name: Backend Pytest
+    runs-on: ubuntu-latest
+    
+    services:
+      postgres:
+        image: postgres:15
+        env:
+          POSTGRES_USER: civilcortex
+          POSTGRES_PASSWORD: civilcortex
+          POSTGRES_DB: civilcortex
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+          
+      redis:
+        image: redis:7
+        ports:
+          - 6379:6379
+
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Set up Python 3.11
+      uses: actions/setup-python@v5
+      with:
+        python-version: "3.11"
+        cache: 'pip'
+        
+    - name: Install backend dependencies
+      working-directory: ./backend
+      run: |
+        python -m pip install --upgrade pip
+        pip install -r requirements.txt
+        
+    - name: Run Pytest
+      working-directory: ./backend
+      env:
+        DATABASE_URL: "postgresql://civilcortex:civilcortex@localhost:5432/civilcortex"
+        TEST_DATABASE_URL: "sqlite:///./test.db"
+        REDIS_URL: "redis://localhost:6379/0"
+        ENVIRONMENT: "test"
+        SECRET_KEY: "test_secret_key"
+        GEMINI_API_KEY: "dummy_key_for_tests"
+      run: |
+        PYTHONPATH=. pytest tests/ -v
+
+  frontend-build:
+    name: Frontend Build Verification
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Set up Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: "20"
+        cache: 'npm'
+        cache-dependency-path: './frontend/package-lock.json'
+        
+    - name: Install frontend dependencies
+      working-directory: ./frontend
+      run: npm ci
+      
+    - name: Build frontend
+      working-directory: ./frontend
+      run: npm run build
