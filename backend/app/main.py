@@ -91,13 +91,18 @@ async def unhandled_exception_handler(request: Request, exc: Exception):
         }
     )
 
-# Set up CORS
+# CORS — scoped to only the methods and headers the frontend actually uses.
+# Using allow_methods=["*"] and allow_headers=["*"] in production is a security
+# risk as it allows arbitrary cross-origin requests with any method or header.
+is_production = settings.ENVIRONMENT == "production"
 app.add_middleware(
     CORSMiddleware,
     allow_origins=settings.BACKEND_CORS_ORIGINS,
     allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
+    # In production, restrict to only the methods the API actually exposes.
+    allow_methods=["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"] if is_production else ["*"],
+    # In production, restrict to only the headers the frontend sends.
+    allow_headers=["Authorization", "Content-Type", "Accept", "X-Request-ID"] if is_production else ["*"],
 )
 
 # Include Routers

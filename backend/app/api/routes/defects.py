@@ -24,9 +24,23 @@ from fastapi import Query
 
 @router.get("/", response_model=List[DefectResponse])
 def get_defects(skip: int = Query(default=0, ge=0), limit: int = Query(default=100, ge=1, le=100), db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
-    return db.query(Defect).join(StructuralElement).join(Area).join(Floor).join(Building).filter(
-        Building.organization_id == current_user.organization_id
-    ).offset(skip).limit(limit).all()
+    # Use outerjoin (LEFT JOIN) instead of join (INNER JOIN).
+    # AI-generated defects have structural_element_id=NULL and were silently
+    # excluded by the previous INNER JOIN chain, making them invisible in the UI.
+    return (
+        db.query(Defect)
+        .outerjoin(StructuralElement, Defect.structural_element_id == StructuralElement.id)
+        .outerjoin(Area, StructuralElement.area_id == Area.id)
+        .outerjoin(Floor, Area.floor_id == Floor.id)
+        .outerjoin(Building, Floor.building_id == Building.id)
+        .filter(
+            # Include defects either belonging to this org's elements OR with no element
+            (Building.organization_id == current_user.organization_id) | (Defect.structural_element_id.is_(None))
+        )
+        .offset(skip)
+        .limit(limit)
+        .all()
+    )
 
 @router.post("/", response_model=DefectResponse)
 def create_defect(defect: DefectCreate, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
