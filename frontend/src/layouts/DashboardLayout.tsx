@@ -1,6 +1,6 @@
 import { NavLink, Outlet } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
-import { Home, Building2, ClipboardCheck, AlertTriangle, LineChart, FileText, LogOut } from 'lucide-react';
+import { Home, Building2, ClipboardCheck, AlertTriangle, LineChart, FileText, LogOut, Users } from 'lucide-react';
 import { cn } from '../components/ui';
 
 const NAV_ITEMS = [
@@ -8,6 +8,7 @@ const NAV_ITEMS = [
   { name: 'Buildings', path: '/buildings', icon: Building2 },
   { name: 'Inspections', path: '/inspections', icon: ClipboardCheck },
   { name: 'Defects', path: '/defects', icon: AlertTriangle },
+  { name: 'Team', path: '/team', icon: Users },
   { name: 'Monitoring', path: '/monitoring', icon: LineChart },
   { name: 'Reports', path: '/reports', icon: FileText },
 ];

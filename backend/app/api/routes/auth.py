@@ -134,3 +134,14 @@ def update_user_role(
     db.commit()
     db.refresh(target_user)
     return target_user
+
+from typing import List
+
+@router.get("/users", response_model=List[UserResponse])
+def get_org_users(
+    db: Session = Depends(get_db), 
+    current_user: User = Depends(get_current_user)
+):
+    """Get all users in the current user's organization."""
+    users = db.query(User).filter(User.organization_id == current_user.organization_id).all()
+    return users

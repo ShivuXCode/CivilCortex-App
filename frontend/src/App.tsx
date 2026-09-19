@@ -34,6 +34,7 @@ const Placeholder = ({ title }: { title: string }) => (
 );
 
 import { Register } from './pages/Register';
+import { Team } from './pages/Team';
 
 function AppRoutes() {
   return (
@@ -56,6 +57,7 @@ function AppRoutes() {
         </Route>
 
         <Route path="defects" element={<Defects />} />
+        <Route path="team" element={<Team />} />
         <Route path="monitoring" element={<Placeholder title="Monitoring" />} />
         <Route path="reports" element={<Placeholder title="Reports" />} />
         
