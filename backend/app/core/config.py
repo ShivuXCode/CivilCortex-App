@@ -24,7 +24,9 @@ class Settings:
     ENVIRONMENT: str = os.getenv("ENVIRONMENT", "development")
     SECRET_KEY: str = os.getenv("SECRET_KEY", "super-secret-key-change-in-production")
     ALGORITHM: str = "HS256"
-    ACCESS_TOKEN_EXPIRE_MINUTES: int = 60 * 24 * 7 # 7 days
+    # 60-minute expiry: short-lived tokens limit the damage window of token theft.
+    # Pair this with a refresh token flow for seamless UX in production.
+    ACCESS_TOKEN_EXPIRE_MINUTES: int = 60
     
     # Storage
     STORAGE_ROOT: str = os.getenv("STORAGE_ROOT", "storage/images/")

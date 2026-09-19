@@ -8,10 +8,18 @@ from app.db.session import get_db
 from app.core.config import settings
 from app.models import User
 from app.schemas.user import TokenData
+from app.core.token_blacklist import is_token_blacklisted
 
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl=f"{settings.API_V1_STR}/auth/login")
 
 def get_current_user(db: Session = Depends(get_db), token: str = Depends(oauth2_scheme)) -> User:
+    # Reject tokens that have been explicitly revoked via /auth/logout
+    if is_token_blacklisted(token):
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Token has been revoked. Please log in again.",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
     try:
         payload = jwt.decode(token, settings.SECRET_KEY, algorithms=[settings.ALGORITHM])
         # 'sub' is the RFC 7519 standard claim for the subject (user ID).
