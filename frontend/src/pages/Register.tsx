@@ -51,11 +51,11 @@ export const Register = () => {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-slate-100 p-4">
+    <div className="min-h-screen flex items-center justify-center bg-slate-100 dark:bg-slate-900 p-4">
       <Card className="w-full max-w-md">
         <CardHeader className="text-center pb-8 pt-8">
-          <CardTitle className="text-3xl font-bold tracking-tight text-slate-900">CivilCortex</CardTitle>
-          <p className="text-sm text-slate-500 mt-2">
+          <CardTitle className="text-3xl font-bold tracking-tight text-slate-900 dark:text-white">CivilCortex</CardTitle>
+          <p className="text-sm text-slate-500 dark:text-slate-400 mt-2">
             {inviteToken ? 'Join your organization' : 'Create a new organization account'}
           </p>
         </CardHeader>
@@ -67,7 +67,7 @@ export const Register = () => {
               </div>
             )}
             <div className="space-y-2">
-              <label className="text-sm font-medium leading-none text-slate-700" htmlFor="fullName">
+              <label className="text-sm font-medium leading-none text-slate-700 dark:text-slate-300" htmlFor="fullName">
                 Full Name
               </label>
               <Input
@@ -81,7 +81,7 @@ export const Register = () => {
               />
             </div>
             <div className="space-y-2">
-              <label className="text-sm font-medium leading-none text-slate-700" htmlFor="email">
+              <label className="text-sm font-medium leading-none text-slate-700 dark:text-slate-300" htmlFor="email">
                 Email
               </label>
               <Input
@@ -95,7 +95,7 @@ export const Register = () => {
               />
             </div>
             <div className="space-y-2">
-              <label className="text-sm font-medium leading-none text-slate-700" htmlFor="password">
+              <label className="text-sm font-medium leading-none text-slate-700 dark:text-slate-300" htmlFor="password">
                 Password
               </label>
               <Input
@@ -107,10 +107,10 @@ export const Register = () => {
                 disabled={isLoading}
                 minLength={8}
               />
-              <p className="text-xs text-slate-500">Must be at least 8 characters</p>
+              <p className="text-xs text-slate-500 dark:text-slate-400">Must be at least 8 characters</p>
             </div>
             <div className="space-y-2">
-              <label className="text-sm font-medium leading-none text-slate-700" htmlFor="confirmPassword">
+              <label className="text-sm font-medium leading-none text-slate-700 dark:text-slate-300" htmlFor="confirmPassword">
                 Confirm Password
               </label>
               <Input
@@ -125,7 +125,7 @@ export const Register = () => {
             </div>
             {!inviteToken && (
               <div className="space-y-2">
-                <label className="text-sm font-medium leading-none text-slate-700" htmlFor="organizationName">
+                <label className="text-sm font-medium leading-none text-slate-700 dark:text-slate-300" htmlFor="organizationName">
                   Organization / Company Name
                 </label>
                 <Input
@@ -140,12 +140,12 @@ export const Register = () => {
               </div>
             )}
             <div className="space-y-2">
-              <label className="text-sm font-medium leading-none text-slate-700" htmlFor="role">
+              <label className="text-sm font-medium leading-none text-slate-700 dark:text-slate-300" htmlFor="role">
                 Role
               </label>
               <select
                 id="role"
-                className="flex h-10 w-full rounded-md border border-slate-300 bg-transparent px-3 py-2 text-sm placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-slate-400 focus:border-transparent disabled:cursor-not-allowed disabled:opacity-50"
+                className="flex h-10 w-full rounded-md border border-slate-300 dark:border-slate-600 bg-transparent px-3 py-2 text-sm placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-slate-400 focus:border-transparent disabled:cursor-not-allowed disabled:opacity-50"
                 value={role}
                 onChange={(e) => setRole(e.target.value)}
                 disabled={isLoading}
@@ -160,7 +160,7 @@ export const Register = () => {
             </Button>
             
             <div className="text-center mt-4 pt-4 border-t border-slate-100">
-              <p className="text-sm text-slate-500">
+              <p className="text-sm text-slate-500 dark:text-slate-400">
                 Already have an account?{' '}
                 <Link to="/login" className="text-blue-600 hover:underline">
                   Sign in

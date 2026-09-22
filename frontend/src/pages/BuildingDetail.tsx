@@ -27,7 +27,7 @@ export const BuildingDetail = () => {
     fetchBuilding();
   }, [id]);
 
-  if (isLoading) return <div className="p-8 text-slate-500">Loading building details...</div>;
+  if (isLoading) return <div className="p-8 text-slate-500 dark:text-slate-400">Loading building details...</div>;
   if (!building) return <div className="p-8 text-red-500">Building not found or access denied.</div>;
 
   return (
@@ -37,8 +37,8 @@ export const BuildingDetail = () => {
           <ArrowLeft className="h-5 w-5" />
         </Button>
         <div>
-          <h1 className="text-2xl font-bold tracking-tight text-slate-900">{building.name}</h1>
-          {building.location && <p className="text-slate-500">{building.location}</p>}
+          <h1 className="text-2xl font-bold tracking-tight text-slate-900 dark:text-white">{building.name}</h1>
+          {building.location && <p className="text-slate-500 dark:text-slate-400">{building.location}</p>}
         </div>
       </div>
 
@@ -52,23 +52,23 @@ export const BuildingDetail = () => {
         </CardHeader>
         <CardContent>
           {building.floors.length === 0 ? (
-            <div className="text-center py-8 text-slate-500 text-sm border-2 border-dashed rounded-lg">
+            <div className="text-center py-8 text-slate-500 dark:text-slate-400 text-sm border-2 border-dashed rounded-lg">
               No floors added yet. You will be able to add the hierarchy during your first inspection.
             </div>
           ) : (
             <div className="space-y-4">
               {building.floors.map(floor => (
-                <div key={floor.id} className="pl-4 border-l-2 border-slate-200">
-                  <h4 className="font-semibold text-slate-900">{floor.name}</h4>
+                <div key={floor.id} className="pl-4 border-l-2 border-slate-200 dark:border-slate-700">
+                  <h4 className="font-semibold text-slate-900 dark:text-white">{floor.name}</h4>
                   
                   <div className="mt-2 space-y-3">
                     {floor.areas.map(area => (
                       <div key={area.id} className="pl-4 border-l-2 border-slate-100">
-                        <h5 className="text-sm font-medium text-slate-700">{area.name}</h5>
+                        <h5 className="text-sm font-medium text-slate-700 dark:text-slate-300">{area.name}</h5>
                         
                         <div className="mt-1 flex flex-wrap gap-2">
                           {area.structural_elements.map(el => (
-                            <span key={el.id} className="inline-flex items-center rounded-md bg-slate-50 px-2 py-1 text-xs font-medium text-slate-600 ring-1 ring-inset ring-slate-500/10">
+                            <span key={el.id} className="inline-flex items-center rounded-md bg-slate-50 dark:bg-slate-900/50 px-2 py-1 text-xs font-medium text-slate-600 dark:text-slate-400 ring-1 ring-inset ring-slate-500/10">
                               {el.name} ({el.element_type})
                             </span>
                           ))}

@@ -30,6 +30,11 @@ export const getDefects = async (): Promise<Defect[]> => {
   return response.data;
 };
 
+export const getDefect = async (defectId: string): Promise<Defect> => {
+  const response = await apiClient.get(`/defects/${defectId}`);
+  return response.data;
+};
+
 export const createDefect = async (data: { defect_type: string; structural_element_id: string }): Promise<Defect> => {
   const response = await apiClient.post('/defects/', data);
   return response.data;

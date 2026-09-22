@@ -76,42 +76,42 @@ export const Dashboard = () => {
       case 'COMPLETED':
         return <Button size="sm" variant="outline" onClick={() => navigate(`/inspections/${insp.id}/report`)}>View Report</Button>;
       default:
-        return <span className="text-sm text-slate-500">Processing...</span>;
+        return <span className="text-sm text-slate-500 dark:text-slate-400">Processing...</span>;
     }
   };
 
-  if (isLoading) return <div className="p-8 text-slate-500">Loading unified dashboard...</div>;
+  if (isLoading) return <div className="p-8 text-slate-500 dark:text-slate-400">Loading unified dashboard...</div>;
 
   return (
     <div className="space-y-6">
       <div className="flex justify-between items-center">
-        <h1 className="text-3xl font-bold tracking-tight text-slate-900">Dashboard</h1>
+        <h1 className="text-3xl font-bold tracking-tight text-slate-900 dark:text-white">Dashboard</h1>
         <Button onClick={() => navigate('/inspections/new')}>Start New Inspection</Button>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         <Card>
           <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-slate-500 uppercase">Total Buildings</CardTitle>
+            <CardTitle className="text-sm font-medium text-slate-500 dark:text-slate-400 uppercase">Total Buildings</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-3xl font-bold text-slate-900">{stats.buildings}</div>
+            <div className="text-3xl font-bold text-slate-900 dark:text-white">{stats.buildings}</div>
           </CardContent>
         </Card>
         <Card>
           <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-slate-500 uppercase">Active Inspections</CardTitle>
+            <CardTitle className="text-sm font-medium text-slate-500 dark:text-slate-400 uppercase">Active Inspections</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-3xl font-bold text-slate-900">{stats.activeInspections}</div>
+            <div className="text-3xl font-bold text-slate-900 dark:text-white">{stats.activeInspections}</div>
           </CardContent>
         </Card>
         <Card>
           <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-slate-500 uppercase">Open Defects</CardTitle>
+            <CardTitle className="text-sm font-medium text-slate-500 dark:text-slate-400 uppercase">Open Defects</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-3xl font-bold text-slate-900">{stats.openDefects}</div>
+            <div className="text-3xl font-bold text-slate-900 dark:text-white">{stats.openDefects}</div>
           </CardContent>
         </Card>
       </div>
@@ -122,16 +122,16 @@ export const Dashboard = () => {
         </CardHeader>
         <CardContent>
           {inspections.length === 0 ? (
-            <p className="text-slate-500">No inspections found.</p>
+            <p className="text-slate-500 dark:text-slate-400">No inspections found.</p>
           ) : (
             <div className="space-y-4">
               {inspections.map(insp => (
-                <div key={insp.id} className="flex flex-col sm:flex-row justify-between items-start sm:items-center p-4 border rounded-lg bg-white shadow-sm gap-4">
+                <div key={insp.id} className="flex flex-col sm:flex-row justify-between items-start sm:items-center p-4 border rounded-lg bg-white dark:bg-slate-800 shadow-sm gap-4">
                   <div>
-                    <h3 className="font-semibold text-slate-900">Inspection {insp.id.substring(0,8)}</h3>
+                    <h3 className="font-semibold text-slate-900 dark:text-white">Inspection {insp.id.substring(0,8)}</h3>
                     <div className="flex items-center gap-2 mt-1">
-                      <span className="text-sm text-slate-500">Status:</span>
-                      <span className="text-xs font-medium px-2 py-1 bg-slate-100 rounded-full">{insp.status}</span>
+                      <span className="text-sm text-slate-500 dark:text-slate-400">Status:</span>
+                      <span className="text-xs font-medium px-2 py-1 bg-slate-100 dark:bg-slate-900 rounded-full">{insp.status}</span>
                     </div>
                   </div>
                   <div className="flex items-center gap-3">

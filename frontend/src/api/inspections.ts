@@ -65,6 +65,7 @@ export interface AssessmentResponse {
   severity: string;
   risk: string;
   repair_recommendation?: string;
+  rag_context?: string;
   created_at: string;
   updated_at: string;
 }

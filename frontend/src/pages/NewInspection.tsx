@@ -121,8 +121,8 @@ export const NewInspection = () => {
   return (
     <div className="max-w-3xl mx-auto space-y-6">
       <div className="mb-8">
-        <h1 className="text-2xl font-bold tracking-tight text-slate-900">New Inspection</h1>
-        <p className="text-slate-500">Record a new structural observation in the field.</p>
+        <h1 className="text-2xl font-bold tracking-tight text-slate-900 dark:text-white">New Inspection</h1>
+        <p className="text-slate-500 dark:text-slate-400">Record a new structural observation in the field.</p>
       </div>
 
       {step === 1 && (
@@ -132,10 +132,10 @@ export const NewInspection = () => {
           </CardHeader>
           <CardContent className="space-y-4">
             <div>
-              <label htmlFor="building-select" className="text-sm font-medium text-slate-700">Building</label>
+              <label htmlFor="building-select" className="text-sm font-medium text-slate-700 dark:text-slate-300">Building</label>
               <select 
                 id="building-select"
-                className="mt-1 block w-full rounded-md border-slate-300 py-2 pl-3 pr-10 text-base focus:border-slate-500 focus:outline-none focus:ring-slate-500 sm:text-sm border bg-white"
+                className="mt-1 block w-full rounded-md border-slate-300 dark:border-slate-600 py-2 pl-3 pr-10 text-base focus:border-slate-500 focus:outline-none focus:ring-slate-500 sm:text-sm border bg-white dark:bg-slate-800"
                 value={selectedBuildingId}
                 onChange={(e) => {
                   setSelectedBuildingId(e.target.value);
@@ -149,10 +149,10 @@ export const NewInspection = () => {
 
             {buildingDetail && (
               <div>
-                <label htmlFor="floor-select" className="text-sm font-medium text-slate-700">Floor</label>
+                <label htmlFor="floor-select" className="text-sm font-medium text-slate-700 dark:text-slate-300">Floor</label>
                 <select 
                   id="floor-select"
-                  className="mt-1 block w-full rounded-md border-slate-300 py-2 pl-3 pr-10 text-base focus:border-slate-500 focus:outline-none focus:ring-slate-500 sm:text-sm border bg-white"
+                  className="mt-1 block w-full rounded-md border-slate-300 dark:border-slate-600 py-2 pl-3 pr-10 text-base focus:border-slate-500 focus:outline-none focus:ring-slate-500 sm:text-sm border bg-white dark:bg-slate-800"
                   value={selectedFloorId}
                   onChange={(e) => {
                     setSelectedFloorId(e.target.value);
@@ -168,10 +168,10 @@ export const NewInspection = () => {
 
             {selectedFloorId && buildingDetail && (
               <div>
-                <label htmlFor="area-select" className="text-sm font-medium text-slate-700">Area</label>
+                <label htmlFor="area-select" className="text-sm font-medium text-slate-700 dark:text-slate-300">Area</label>
                 <select 
                   id="area-select"
-                  className="mt-1 block w-full rounded-md border-slate-300 py-2 pl-3 pr-10 text-base focus:border-slate-500 focus:outline-none focus:ring-slate-500 sm:text-sm border bg-white"
+                  className="mt-1 block w-full rounded-md border-slate-300 dark:border-slate-600 py-2 pl-3 pr-10 text-base focus:border-slate-500 focus:outline-none focus:ring-slate-500 sm:text-sm border bg-white dark:bg-slate-800"
                   value={selectedAreaId}
                   onChange={(e) => {
                     setSelectedAreaId(e.target.value);
@@ -186,10 +186,10 @@ export const NewInspection = () => {
 
             {selectedAreaId && buildingDetail && (
               <div>
-                <label htmlFor="element-select" className="text-sm font-medium text-slate-700">Structural Element</label>
+                <label htmlFor="element-select" className="text-sm font-medium text-slate-700 dark:text-slate-300">Structural Element</label>
                 <select 
                   id="element-select"
-                  className="mt-1 block w-full rounded-md border-slate-300 py-2 pl-3 pr-10 text-base focus:border-slate-500 focus:outline-none focus:ring-slate-500 sm:text-sm border bg-white"
+                  className="mt-1 block w-full rounded-md border-slate-300 dark:border-slate-600 py-2 pl-3 pr-10 text-base focus:border-slate-500 focus:outline-none focus:ring-slate-500 sm:text-sm border bg-white dark:bg-slate-800"
                   value={selectedElementId}
                   onChange={(e) => setSelectedElementId(e.target.value)}
                 >
@@ -212,29 +212,29 @@ export const NewInspection = () => {
         <Card>
           <CardHeader>
             <CardTitle>2. Capture Defect</CardTitle>
-            <p className="text-sm text-slate-500">Capture the defect as clearly as possible. Include a scale/reference when physical measurements are required.</p>
+            <p className="text-sm text-slate-500 dark:text-slate-400">Capture the defect as clearly as possible. Include a scale/reference when physical measurements are required.</p>
           </CardHeader>
           <CardContent className="space-y-4">
-            <div className="border-2 border-dashed border-slate-300 rounded-lg p-12 text-center hover:bg-slate-50 transition-colors">
+            <div className="border-2 border-dashed border-slate-300 dark:border-slate-600 rounded-lg p-12 text-center hover:bg-slate-50 dark:bg-slate-900/50 transition-colors">
               <UploadCloud className="mx-auto h-12 w-12 text-slate-400 mb-4" />
-              <div className="flex text-sm text-slate-600 justify-center">
-                <label htmlFor="file-upload" className="relative cursor-pointer rounded-md font-medium text-slate-900 focus-within:outline-none focus-within:ring-2 focus-within:ring-slate-500 focus-within:ring-offset-2 hover:text-slate-700">
+              <div className="flex text-sm text-slate-600 dark:text-slate-400 justify-center">
+                <label htmlFor="file-upload" className="relative cursor-pointer rounded-md font-medium text-slate-900 dark:text-white focus-within:outline-none focus-within:ring-2 focus-within:ring-slate-500 focus-within:ring-offset-2 hover:text-slate-700 dark:text-slate-300">
                   <span>Upload a file</span>
                   <input id="file-upload" name="file-upload" type="file" className="sr-only" accept="image/jpeg,image/png,image/webp" onChange={handleImageUpload} />
                 </label>
                 <p className="pl-1">or drag and drop</p>
               </div>
-              <p className="text-xs text-slate-500 mt-2">PNG, JPG, WEBP up to 20MB</p>
+              <p className="text-xs text-slate-500 dark:text-slate-400 mt-2">PNG, JPG, WEBP up to 20MB</p>
             </div>
             
             {imageFile && (
-              <div className="flex items-center gap-4 bg-slate-50 p-4 rounded-md border border-slate-200">
+              <div className="flex items-center gap-4 bg-slate-50 dark:bg-slate-900/50 p-4 rounded-md border border-slate-200 dark:border-slate-700">
                 <div className="h-16 w-16 bg-slate-200 rounded object-cover overflow-hidden flex-shrink-0">
                   <img src={URL.createObjectURL(imageFile)} alt="Preview" className="h-full w-full object-cover" />
                 </div>
                 <div className="flex-1 min-w-0">
-                  <p className="text-sm font-medium text-slate-900 truncate">{imageFile.name}</p>
-                  <p className="text-xs text-slate-500">{(imageFile.size / 1024 / 1024).toFixed(2)} MB</p>
+                  <p className="text-sm font-medium text-slate-900 dark:text-white truncate">{imageFile.name}</p>
+                  <p className="text-xs text-slate-500 dark:text-slate-400">{(imageFile.size / 1024 / 1024).toFixed(2)} MB</p>
                 </div>
               </div>
             )}
@@ -250,15 +250,15 @@ export const NewInspection = () => {
       )}
 
       {step === 3 && (
-        <Card className="border-slate-200">
-          <CardHeader className={jobStatus === 'COMPLETED' ? "bg-slate-900 text-white rounded-t-xl" : "bg-slate-100 rounded-t-xl border-b border-slate-200"}>
+        <Card className="border-slate-200 dark:border-slate-700">
+          <CardHeader className={jobStatus === 'COMPLETED' ? "bg-slate-900 text-white rounded-t-xl" : "bg-slate-100 dark:bg-slate-900 rounded-t-xl border-b border-slate-200 dark:border-slate-700"}>
             <CardTitle className="flex items-center gap-2">
               {jobStatus === 'COMPLETED' ? (
                 <CheckCircle className="h-5 w-5 text-emerald-400" />
               ) : jobStatus === 'FAILED' ? (
                 <AlertTriangle className="h-5 w-5 text-red-500" />
               ) : (
-                <Loader2 className="h-5 w-5 animate-spin text-slate-500" />
+                <Loader2 className="h-5 w-5 animate-spin text-slate-500 dark:text-slate-400" />
               )}
               {jobStatus === 'QUEUED' && "Analysis Queued..."}
               {jobStatus === 'PROCESSING' && "Analysis In Progress..."}
@@ -270,14 +270,14 @@ export const NewInspection = () => {
             
             {(jobStatus === 'QUEUED' || jobStatus === 'PROCESSING') && (
               <div className="text-center py-12 space-y-4">
-                <p className="text-slate-600">Please wait while our models and AI agents evaluate the structural defect.</p>
+                <p className="text-slate-600 dark:text-slate-400">Please wait while our models and AI agents evaluate the structural defect.</p>
                 <p className="text-sm text-slate-400">This may take up to 60 seconds.</p>
               </div>
             )}
 
             {jobStatus === 'COMPLETED' && (
               <div className="space-y-6 text-center py-6">
-                <p className="text-slate-700 font-medium text-lg">Defect observation captured and analysis generated successfully.</p>
+                <p className="text-slate-700 dark:text-slate-300 font-medium text-lg">Defect observation captured and analysis generated successfully.</p>
                 <div className="pt-4 flex justify-center">
                   <Button onClick={() => navigate(`/inspections/${inspectionId}/report`)}>
                     View Engineering Report

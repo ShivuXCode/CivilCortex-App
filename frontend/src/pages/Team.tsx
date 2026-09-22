@@ -73,8 +73,8 @@ export const Team = () => {
     <div className="space-y-6">
       <div className="flex justify-between items-center">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight text-slate-900">Team Management</h1>
-          <p className="text-sm text-slate-500">Manage members and roles in your organization.</p>
+          <h1 className="text-2xl font-bold tracking-tight text-slate-900 dark:text-white">Team Management</h1>
+          <p className="text-sm text-slate-500 dark:text-slate-400">Manage members and roles in your organization.</p>
         </div>
         {isAdmin && (
           <Button onClick={handleGenerateInvite} disabled={isGeneratingInvite}>
@@ -86,7 +86,7 @@ export const Team = () => {
       {inviteLink && (
         <Card className="bg-blue-50 border-blue-100">
           <CardContent className="p-4 flex items-center gap-4">
-            <Input readOnly value={inviteLink} className="flex-1 bg-white" />
+            <Input readOnly value={inviteLink} className="flex-1 bg-white dark:bg-slate-800" />
             <Button variant="outline" onClick={copyToClipboard}>Copy</Button>
           </CardContent>
         </Card>
@@ -95,7 +95,7 @@ export const Team = () => {
       <Card>
         <CardContent className="p-0">
           <table className="w-full text-sm text-left">
-            <thead className="text-xs text-slate-500 bg-slate-50 uppercase border-b border-slate-200">
+            <thead className="text-xs text-slate-500 dark:text-slate-400 bg-slate-50 dark:bg-slate-900/50 uppercase border-b border-slate-200 dark:border-slate-700">
               <tr>
                 <th className="px-6 py-4 font-medium">Email</th>
                 <th className="px-6 py-4 font-medium">Role</th>
@@ -104,7 +104,7 @@ export const Team = () => {
             </thead>
             <tbody className="divide-y divide-slate-100">
               {team.map((member) => (
-                <tr key={member.id} className="hover:bg-slate-50/50">
+                <tr key={member.id} className="hover:bg-slate-50 dark:bg-slate-900/50/50">
                   <td className="px-6 py-4">{member.email}</td>
                   <td className="px-6 py-4">
                     <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium
@@ -118,7 +118,7 @@ export const Team = () => {
                   <td className="px-6 py-4 text-right">
                     {isAdmin && member.id !== user?.id && (
                       <select 
-                        className="text-sm border-slate-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
+                        className="text-sm border-slate-300 dark:border-slate-600 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
                         value={member.role}
                         onChange={(e) => handleRoleChange(member.id, e.target.value)}
                         disabled={isUpdating}

@@ -40,9 +40,9 @@ export const Report = () => {
         if (assessmentsData && assessmentsData.length > 0) {
           const currentAssessment = assessmentsData[0];
           setAssessment(currentAssessment);
-          setEditSeverity(currentAssessment.severity);
-          setEditRisk(currentAssessment.risk);
-          setEditRecommendation(currentAssessment.repair_recommendation || '');
+          setEditSeverity('UNKNOWN');
+          setEditRisk('UNKNOWN');
+          setEditRecommendation('');
         } else {
           setError('No assessment has been generated for this inspection yet.');
         }
@@ -85,7 +85,7 @@ export const Report = () => {
 
   if (isLoading) {
     return (
-      <div className="flex items-center justify-center p-12 text-slate-500">
+      <div className="flex items-center justify-center p-12 text-slate-500 dark:text-slate-400">
         <Activity className="h-6 w-6 animate-pulse mr-2" />
         Loading assessment...
       </div>
@@ -114,27 +114,27 @@ export const Report = () => {
         <Button variant="ghost" onClick={() => navigate('/defects')} className="mb-4 -ml-4">
           <ArrowLeft className="h-4 w-4 mr-2" /> Back to Defects
         </Button>
-        <h1 className="text-3xl font-bold tracking-tight text-slate-900">Engineering Assessment Report</h1>
-        <p className="text-slate-500 mt-1">AI-assisted structural defect analysis and risk evaluation</p>
+        <h1 className="text-3xl font-bold tracking-tight text-slate-900 dark:text-white">Engineering Assessment Report</h1>
+        <p className="text-slate-500 dark:text-slate-400 mt-1">AI-assisted structural defect analysis and risk evaluation</p>
       </div>
 
       <Card>
-        <CardHeader className="bg-slate-50 border-b border-slate-100">
+        <CardHeader className="bg-slate-50 dark:bg-slate-900/50 border-b border-slate-100">
           <CardTitle className="text-lg flex items-center gap-2">
-            <ShieldAlert className="h-5 w-5 text-slate-500" />
+            <ShieldAlert className="h-5 w-5 text-slate-500 dark:text-slate-400" />
             Risk Assessment
           </CardTitle>
         </CardHeader>
         <CardContent className="pt-6">
           <div className="grid grid-cols-2 gap-6">
             <div className="space-y-1">
-              <span className="text-sm font-medium text-slate-500 uppercase tracking-wider">Severity</span>
-              <p className="text-2xl font-semibold capitalize text-slate-900">{assessment.severity}</p>
+              <span className="text-sm font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider">Severity</span>
+              <p className="text-2xl font-semibold capitalize text-slate-900 dark:text-white">{assessment.severity}</p>
             </div>
             <div className="space-y-1 flex justify-between items-start">
               <div>
-                <span className="text-sm font-medium text-slate-500 uppercase tracking-wider">Risk Level</span>
-                <p className="text-2xl font-semibold capitalize text-slate-900">{assessment.risk.replace(/_/g, ' ')}</p>
+                <span className="text-sm font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider">Risk Level</span>
+                <p className="text-2xl font-semibold capitalize text-slate-900 dark:text-white">{assessment.risk.replace(/_/g, ' ')}</p>
               </div>
               <Button variant="outline" size="sm" onClick={() => setShowAuditModal(true)} className="flex items-center gap-2">
                 <Clock className="w-4 h-4" />
@@ -142,7 +142,7 @@ export const Report = () => {
               </Button>
             </div>
             <div className="col-span-2 space-y-1 mt-4">
-              <span className="text-sm font-medium text-slate-500 uppercase tracking-wider block mb-2">AI-Generated Recommendation</span>
+              <span className="text-sm font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider block mb-2">AI-Generated Recommendation</span>
               <div className="bg-amber-50 border border-amber-200 rounded-md p-4 text-amber-900 text-sm leading-relaxed">
                 {assessment.repair_recommendation || "No specific recommendation was generated."}
               </div>
@@ -159,19 +159,25 @@ export const Report = () => {
       )}
 
       <Card>
-        <CardHeader className="bg-slate-50 border-b border-slate-100">
+        <CardHeader className="bg-slate-50 dark:bg-slate-900/50 border-b border-slate-100">
           <CardTitle className="text-lg flex items-center gap-2">
-            <FileText className="h-5 w-5 text-slate-500" />
+            <FileText className="h-5 w-5 text-slate-500 dark:text-slate-400" />
             Regulatory / RAG Evidence
           </CardTitle>
         </CardHeader>
         <CardContent className="pt-6">
-          <p className="text-slate-600 italic">No relevant regulatory evidence was retrieved.</p>
+          {assessment.rag_context ? (
+            <div className="prose prose-sm prose-slate max-w-none">
+              <ReactMarkdown>{assessment.rag_context}</ReactMarkdown>
+            </div>
+          ) : (
+            <p className="text-slate-600 dark:text-slate-400 italic">No relevant regulatory evidence was retrieved.</p>
+          )}
         </CardContent>
       </Card>
 
       <Card>
-        <CardHeader className="bg-slate-50 border-b border-slate-100">
+        <CardHeader className="bg-slate-50 dark:bg-slate-900/50 border-b border-slate-100">
           <CardTitle className="text-lg">Executive Report</CardTitle>
         </CardHeader>
         <CardContent className="pt-6">
@@ -180,7 +186,7 @@ export const Report = () => {
               <ReactMarkdown>{report.content}</ReactMarkdown>
             </div>
           ) : (
-            <p className="text-slate-500 italic">Executive report generation is still pending or unavailable.</p>
+            <p className="text-slate-500 dark:text-slate-400 italic">Executive report generation is still pending or unavailable.</p>
           )}
         </CardContent>
       </Card>
@@ -195,10 +201,10 @@ export const Report = () => {
           <form onSubmit={handleUpdate} className="space-y-6">
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
-                <label htmlFor="severity-select" className="text-sm font-medium text-slate-700">Override Severity</label>
+                <label htmlFor="severity-select" className="text-sm font-medium text-slate-700 dark:text-slate-300">Override Severity</label>
                 <select 
                   id="severity-select"
-                  className="block w-full rounded-md border-slate-300 py-2 pl-3 pr-10 text-base focus:border-indigo-500 focus:outline-none focus:ring-indigo-500 sm:text-sm border bg-white"
+                  className="block w-full rounded-md border-slate-300 dark:border-slate-600 py-2 pl-3 pr-10 text-base focus:border-indigo-500 focus:outline-none focus:ring-indigo-500 sm:text-sm border bg-white dark:bg-slate-800"
                   value={editSeverity}
                   onChange={e => setEditSeverity(e.target.value)}
                 >
@@ -210,13 +216,14 @@ export const Report = () => {
                 </select>
               </div>
               <div className="space-y-2">
-                <label htmlFor="risk-select" className="text-sm font-medium text-slate-700">Override Risk</label>
+                <label htmlFor="risk-select" className="text-sm font-medium text-slate-700 dark:text-slate-300">Override Risk</label>
                 <select 
                   id="risk-select"
-                  className="block w-full rounded-md border-slate-300 py-2 pl-3 pr-10 text-base focus:border-indigo-500 focus:outline-none focus:ring-indigo-500 sm:text-sm border bg-white"
+                  className="block w-full rounded-md border-slate-300 dark:border-slate-600 py-2 pl-3 pr-10 text-base focus:border-indigo-500 focus:outline-none focus:ring-indigo-500 sm:text-sm border bg-white dark:bg-slate-800"
                   value={editRisk}
                   onChange={e => setEditRisk(e.target.value)}
                 >
+                  <option value="UNKNOWN">Unknown</option>
                   <option value="LOW">Low</option>
                   <option value="MODERATE">Moderate</option>
                   <option value="HIGH">High</option>
@@ -227,10 +234,10 @@ export const Report = () => {
             </div>
             
             <div className="space-y-2">
-              <label htmlFor="recommendation-textarea" className="text-sm font-medium text-slate-700">Engineering Recommendation / Action Plan</label>
+              <label htmlFor="recommendation-textarea" className="text-sm font-medium text-slate-700 dark:text-slate-300">Engineering Recommendation / Action Plan</label>
               <textarea 
                 id="recommendation-textarea"
-                className="block w-full rounded-md border-slate-300 py-2 px-3 focus:border-indigo-500 focus:outline-none focus:ring-indigo-500 sm:text-sm border bg-white"
+                className="block w-full rounded-md border-slate-300 dark:border-slate-600 py-2 px-3 focus:border-indigo-500 focus:outline-none focus:ring-indigo-500 sm:text-sm border bg-white dark:bg-slate-800"
                 rows={4}
                 value={editRecommendation}
                 onChange={e => setEditRecommendation(e.target.value)}

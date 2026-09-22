@@ -1,5 +1,7 @@
 @import "tailwindcss";
 
+@custom-variant dark (&:is(.dark *));
+
 @theme {
   --color-primary: #0f172a; /* slate-900 */
   --color-primary-hover: #1e293b; /* slate-800 */
@@ -16,10 +18,9 @@
 
 /* Base styles */
 body {
-  background-color: var(--color-background);
-  color: var(--color-text-primary);
   font-family: Inter, system-ui, Avenir, Helvetica, Arial, sans-serif;
   margin: 0;
+  @apply bg-slate-100 text-slate-900 dark:bg-slate-900 dark:text-slate-100;
 }
 
 /* Modern reset for some elements */

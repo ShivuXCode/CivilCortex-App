@@ -82,8 +82,8 @@ export const Buildings = () => {
     <div className="space-y-6">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight text-slate-900">Buildings</h1>
-          <p className="text-slate-500">Manage your inspection sites and structures.</p>
+          <h1 className="text-2xl font-bold tracking-tight text-slate-900 dark:text-white">Buildings</h1>
+          <p className="text-slate-500 dark:text-slate-400">Manage your inspection sites and structures.</p>
         </div>
         <Button onClick={() => setIsAdding(!isAdding)}>
           <Plus className="mr-2 h-4 w-4" /> Add Building
@@ -91,12 +91,12 @@ export const Buildings = () => {
       </div>
 
       {isAdding && (
-        <Card className="bg-slate-50 border-dashed">
+        <Card className="bg-slate-50 dark:bg-slate-900/50 border-dashed">
           <CardContent className="pt-6">
             <form onSubmit={handleAddBuilding} className="space-y-4">
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                 <div className="sm:col-span-1 space-y-2">
-                  <label className="text-sm font-medium text-slate-700">Building Name *</label>
+                  <label className="text-sm font-medium text-slate-700 dark:text-slate-300">Building Name *</label>
                   <Input
                     value={newBuildingName}
                     onChange={(e) => setNewBuildingName(e.target.value)}
@@ -106,7 +106,7 @@ export const Buildings = () => {
                   />
                 </div>
                 <div className="sm:col-span-1 space-y-2">
-                  <label className="text-sm font-medium text-slate-700">Location</label>
+                  <label className="text-sm font-medium text-slate-700 dark:text-slate-300">Location</label>
                   <Input
                     value={newBuildingLocation}
                     onChange={(e) => setNewBuildingLocation(e.target.value)}
@@ -114,7 +114,7 @@ export const Buildings = () => {
                   />
                 </div>
                 <div className="space-y-2">
-                  <label className="text-sm font-medium text-slate-700">Number of Floors *</label>
+                  <label className="text-sm font-medium text-slate-700 dark:text-slate-300">Number of Floors *</label>
                   <Input
                     type="number"
                     min={1}
@@ -150,15 +150,15 @@ export const Buildings = () => {
       </div>
 
       {isLoading ? (
-        <div className="text-slate-500 text-center py-12">Loading buildings...</div>
+        <div className="text-slate-500 dark:text-slate-400 text-center py-12">Loading buildings...</div>
       ) : filteredBuildings.length === 0 ? (
         <Card className="border-dashed">
           <CardContent className="flex flex-col items-center justify-center py-16 text-center">
-            <div className="rounded-full bg-slate-100 p-3 mb-4">
+            <div className="rounded-full bg-slate-100 dark:bg-slate-900 p-3 mb-4">
               <Building2 className="h-6 w-6 text-slate-400" />
             </div>
-            <h3 className="text-lg font-semibold text-slate-900">No buildings found</h3>
-            <p className="text-sm text-slate-500 max-w-sm mt-1">
+            <h3 className="text-lg font-semibold text-slate-900 dark:text-white">No buildings found</h3>
+            <p className="text-sm text-slate-500 dark:text-slate-400 max-w-sm mt-1">
               Get started by adding a building to track structural elements and inspections.
             </p>
           </CardContent>
@@ -166,15 +166,15 @@ export const Buildings = () => {
       ) : (
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
           {filteredBuildings.map((building) => (
-            <Card key={building.id} className="cursor-pointer hover:border-slate-300 transition-colors" onClick={() => navigate(`/buildings/${building.id}`)}>
+            <Card key={building.id} className="cursor-pointer hover:border-slate-300 dark:border-slate-600 transition-colors" onClick={() => navigate(`/buildings/${building.id}`)}>
               <CardHeader className="pb-3">
                 <CardTitle className="text-lg">{building.name}</CardTitle>
-                {building.location && <p className="text-sm text-slate-500">{building.location}</p>}
+                {building.location && <p className="text-sm text-slate-500 dark:text-slate-400">{building.location}</p>}
               </CardHeader>
               <CardContent>
-                <div className="text-sm text-slate-500 flex items-center justify-between">
+                <div className="text-sm text-slate-500 dark:text-slate-400 flex items-center justify-between">
                   <span>Added {new Date(building.created_at).toLocaleDateString()}</span>
-                  <span className="font-medium text-slate-900 hover:underline">View details &rarr;</span>
+                  <span className="font-medium text-slate-900 dark:text-white hover:underline">View details &rarr;</span>
                 </div>
               </CardContent>
             </Card>

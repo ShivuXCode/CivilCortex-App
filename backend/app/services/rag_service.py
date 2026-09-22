@@ -4,6 +4,8 @@ from langchain_chroma import Chroma
 from langchain_google_genai import GoogleGenerativeAIEmbeddings
 from langchain_huggingface import HuggingFaceEmbeddings
 from app.schemas.ai_contract import RAGEvidence
+from langchain_text_splitters import RecursiveCharacterTextSplitter
+import glob
 from app.core.logger import logger
 from app.core.exceptions import RAGError
 from app.core.config import settings
@@ -19,9 +21,8 @@ class RagService:
             return
             
         if not os.path.exists(self.db_path):
-            logger.warning(f"Chroma DB path does not exist: {self.db_path}")
-            self._initialized = True
-            return
+            logger.info(f"Chroma DB path does not exist, creating it: {self.db_path}")
+            os.makedirs(self.db_path, exist_ok=True)
 
         try:
             logger.info("Initializing ChromaDB with HuggingFace Local Embeddings (offline)...")
@@ -42,21 +43,41 @@ class RagService:
         self._insert_seed_data()
 
     def _insert_seed_data(self):
-        # Auto-seed the database if empty to ensure the RAG works out of the box
         try:
             if getattr(self.db, '_collection', None) and self.db._collection.count() == 0:
-                logger.info("RAG DB is empty. Seeding with sample engineering standards...")
-                standards = [
-                    "ACI 224R-01: Epoxy injection is recommended for repairing dormant cracks in concrete where restoration of structural integrity is required.",
-                    "FHWA Tunnel Manual: Carbon Fiber Reinforced Polymer (CFRP) should be used for structural reinforcement of Spalling in critical load-bearing concrete zones.",
-                    "ISO 13822: Hairline cracks with low severity and a health score > 80 generally require Surface Sealing to prevent water ingress, rather than structural repair."
-                ]
-                metadata = [
-                    {"category": "structural_standard", "source": "ACI 224R-01"},
-                    {"category": "structural_standard", "source": "FHWA Tunnel Manual"},
-                    {"category": "structural_standard", "source": "ISO 13822"}
-                ]
-                self.db.add_texts(texts=standards, metadatas=metadata)
+                logger.info("RAG DB is empty. Loading engineering standards from disk...")
+                standards_dir = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "data", "standards")
+                
+                if not os.path.exists(standards_dir):
+                    logger.warning(f"Standards directory not found: {standards_dir}")
+                    return
+
+                text_splitter = RecursiveCharacterTextSplitter(
+                    chunk_size=500,
+                    chunk_overlap=50,
+                    length_function=len,
+                )
+                
+                all_chunks = []
+                all_metadatas = []
+
+                for file_path in glob.glob(os.path.join(standards_dir, "*.*")):
+                    if file_path.endswith('.txt') or file_path.endswith('.md'):
+                        with open(file_path, 'r', encoding='utf-8') as f:
+                            content = f.read()
+                            filename = os.path.basename(file_path)
+                            
+                            chunks = text_splitter.split_text(content)
+                            for chunk in chunks:
+                                all_chunks.append(chunk)
+                                all_metadatas.append({"category": "structural_standard", "source": filename})
+                
+                if all_chunks:
+                    logger.info(f"Adding {len(all_chunks)} document chunks to Chroma DB.")
+                    self.db.add_texts(texts=all_chunks, metadatas=all_metadatas)
+                else:
+                    logger.warning("No standard documents found to seed.")
+                    
         except Exception as e:
             logger.error(f"Failed to seed RAG database: {e}")
 

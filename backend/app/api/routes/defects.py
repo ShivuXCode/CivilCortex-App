@@ -41,6 +41,15 @@ def get_defects(skip: int = Query(default=0, ge=0), limit: int = Query(default=1
         .all()
     )
 
+@router.get("/{defect_id}", response_model=DefectResponse)
+def get_defect(defect_id: str, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
+    defect = db.query(Defect).outerjoin(StructuralElement, Defect.structural_element_id == StructuralElement.id).outerjoin(Area, StructuralElement.area_id == Area.id).outerjoin(Floor, Area.floor_id == Floor.id).outerjoin(Building, Floor.building_id == Building.id).filter(Defect.id == defect_id).first()
+    if not defect:
+        raise HTTPException(status_code=404, detail="Defect not found")
+    if defect.structural_element_id is not None and defect.structural_element.area.floor.building.organization_id != current_user.organization_id:
+        raise HTTPException(status_code=403, detail="Not authorized to access this defect")
+    return defect
+
 @router.post("/", response_model=DefectResponse)
 def create_defect(defect: DefectCreate, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
     element = db.query(StructuralElement).options(joinedload(StructuralElement.area).joinedload(Area.floor).joinedload(Floor.building)).filter(StructuralElement.id == defect.structural_element_id).first()

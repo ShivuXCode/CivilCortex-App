@@ -87,7 +87,9 @@ class AnalysisService:
         # 3. Retrieve RAG Evidence
         logger.info(f"event=analysis_stage stage=RAG status=started")
         from app.services.rag_service import rag_service
-        rag_evidence = rag_service.retrieve_evidence(cv_result["defect_type"])
+        defect_type = cv_result["defect_type"]
+        search_query = defect_type if defect_type in ["Unknown", "none"] else f"Standards, repair guidelines, and maintenance protocols for {defect_type} defects"
+        rag_evidence = rag_service.retrieve_evidence(search_query)
         
         # 4. Construct AnalysisInput
         input_data = AnalysisInput(

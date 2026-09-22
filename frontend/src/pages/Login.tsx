@@ -35,11 +35,11 @@ export const Login = () => {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-slate-100 p-4">
+    <div className="min-h-screen flex items-center justify-center bg-slate-100 dark:bg-slate-900 p-4">
       <Card className="w-full max-w-md">
         <CardHeader className="text-center pb-8 pt-8">
-          <CardTitle className="text-3xl font-bold tracking-tight text-slate-900">CivilCortex</CardTitle>
-          <p className="text-sm text-slate-500 mt-2">Sign in to your engineering account</p>
+          <CardTitle className="text-3xl font-bold tracking-tight text-slate-900 dark:text-white">CivilCortex</CardTitle>
+          <p className="text-sm text-slate-500 dark:text-slate-400 mt-2">Sign in to your engineering account</p>
         </CardHeader>
         <CardContent>
           <form onSubmit={handleSubmit} className="space-y-4">
@@ -49,7 +49,7 @@ export const Login = () => {
               </div>
             )}
             <div className="space-y-2">
-              <label className="text-sm font-medium leading-none text-slate-700" htmlFor="email">
+              <label className="text-sm font-medium leading-none text-slate-700 dark:text-slate-300" htmlFor="email">
                 Email
               </label>
               <Input
@@ -63,7 +63,7 @@ export const Login = () => {
               />
             </div>
             <div className="space-y-2">
-              <label className="text-sm font-medium leading-none text-slate-700" htmlFor="password">
+              <label className="text-sm font-medium leading-none text-slate-700 dark:text-slate-300" htmlFor="password">
                 Password
               </label>
               <Input
@@ -79,7 +79,7 @@ export const Login = () => {
               {isLoading ? 'Signing in...' : 'Sign in'}
             </Button>
             <div className="text-center mt-4 pt-4 border-t border-slate-100">
-              <p className="text-sm text-slate-500">
+              <p className="text-sm text-slate-500 dark:text-slate-400">
                 Don't have an account?{' '}
                 <a href="/register" className="text-blue-600 hover:underline">
                   Register

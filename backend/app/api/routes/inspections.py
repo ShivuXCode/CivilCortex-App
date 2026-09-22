@@ -184,9 +184,6 @@ def get_inspection_report(
 
 from pydantic import BaseModel
 
-class AssignEngineerRequest(BaseModel):
-    engineer_id: str
-
 @router.post("/{inspection_id}/submit")
 def submit_inspection(
     inspection_id: str,
@@ -208,33 +205,6 @@ def submit_inspection(
     return {"status": inspection.status}
 
 
-@router.post("/{inspection_id}/assign")
-def assign_engineer(
-    inspection_id: str,
-    data: AssignEngineerRequest,
-    db: Session = Depends(get_db),
-    current_user: User = Depends(get_admin_user)
-):
-    inspection = db.query(Inspection).join(Building).filter(
-        Inspection.id == inspection_id,
-        Building.organization_id == current_user.organization_id
-    ).first()
-    if not inspection:
-        raise HTTPException(status_code=404, detail="Inspection not found")
-    
-    engineer = db.query(User).filter(
-        User.id == data.engineer_id,
-        User.organization_id == current_user.organization_id,
-        User.role == "ENGINEER"
-    ).first()
-    
-    if not engineer:
-        raise HTTPException(status_code=400, detail="Invalid engineer ID or engineer does not belong to organization")
-        
-    inspection.assigned_engineer_id = engineer.id
-    db.commit()
-    return {"message": "Engineer assigned successfully"}
-
 
 @router.post("/{inspection_id}/begin-review")
 def begin_review(
@@ -248,8 +218,6 @@ def begin_review(
     ).first()
     if not inspection:
         raise HTTPException(status_code=404, detail="Inspection not found")
-    if current_user.role == "ENGINEER" and inspection.assigned_engineer_id != current_user.id:
-        raise HTTPException(status_code=403, detail="Not assigned to this inspection")
     if inspection.status not in ["SUBMITTED", "ASSESSMENT_READY"]:
         raise HTTPException(status_code=400, detail="Inspection is not ready for review")
         
@@ -274,8 +242,6 @@ def request_revision(
     ).first()
     if not inspection:
         raise HTTPException(status_code=404, detail="Inspection not found")
-    if current_user.role == "ENGINEER" and inspection.assigned_engineer_id != current_user.id:
-        raise HTTPException(status_code=403, detail="Not assigned to this inspection")
     if inspection.status != "UNDER_ENGINEER_REVIEW":
         raise HTTPException(status_code=400, detail="Inspection must be UNDER_ENGINEER_REVIEW to request a revision")
         
@@ -297,8 +263,6 @@ def approve_inspection(
     ).first()
     if not inspection:
         raise HTTPException(status_code=404, detail="Inspection not found")
-    if current_user.role == "ENGINEER" and inspection.assigned_engineer_id != current_user.id:
-        raise HTTPException(status_code=403, detail="Not assigned to this inspection")
     if inspection.status != "UNDER_ENGINEER_REVIEW":
         raise HTTPException(status_code=400, detail="Inspection must be UNDER_ENGINEER_REVIEW to approve")
         
@@ -318,8 +282,6 @@ def generate_report_retry(
     ).first()
     if not inspection:
         raise HTTPException(status_code=404, detail="Inspection not found")
-    if current_user.role == "ENGINEER" and inspection.assigned_engineer_id != current_user.id:
-        raise HTTPException(status_code=403, detail="Not assigned to this inspection")
         
     if inspection.status not in ["APPROVED", "REPORT_GENERATED"]:
         raise HTTPException(status_code=400, detail="Inspection must be APPROVED to generate report")
@@ -331,7 +293,35 @@ def generate_report_retry(
     if not assessment:
         raise HTTPException(status_code=400, detail="No assessment found to generate report from")
         
-    # Simulate report generation success
+    from langchain_google_genai import ChatGoogleGenerativeAI
+    prompt = f"""
+    Act as a Lead Civil Engineer.
+    Write a final Executive Engineering Report for a structural inspection.
+    
+    Inspection Data:
+    - Defect Severity: {assessment.severity}
+    - Overall Risk Level: {assessment.risk}
+    - Priority: {assessment.priority}
+    - Engineer's Action Plan: {assessment.repair_recommendation}
+    
+    RAG Context:
+    {assessment.rag_context or "No specific standards retrieved."}
+    
+    Please provide a professional, executive-level summary of the findings, the risk, and the recommended repair actions in Markdown format. Ensure you cite the standards if they apply.
+    """
+    
+    try:
+        llm = ChatGoogleGenerativeAI(model="gemini-1.5-flash", temperature=0.1)
+        response = llm.invoke(prompt)
+        report_content = response.content
+    except Exception as e:
+        import logging
+        logging.error(f"Failed to generate LLM report: {e}")
+        report_content = f"### Executive Report\n\n**Severity:** {assessment.severity}\n**Risk:** {assessment.risk}\n\n**Engineer's Action Plan:**\n{assessment.repair_recommendation}\n\n*(Note: LLM generation failed. Showing raw assessment data.)*"
+        
+    assessment.llm_report = report_content
+    assessment.updated_at = __import__('datetime').datetime.utcnow()
     inspection.status = "COMPLETED"
     db.commit()
+    
     return {"status": inspection.status, "message": "Report generated successfully"}

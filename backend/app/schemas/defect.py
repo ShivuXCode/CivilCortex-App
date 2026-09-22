@@ -24,6 +24,7 @@ class AssessmentBase(BaseModel):
     severity: str
     risk: str
     repair_recommendation: Optional[str] = None
+    rag_context: Optional[str] = None
 
 class AssessmentCreate(AssessmentBase):
     pass
