@@ -88,7 +88,7 @@ def generate_recommendation(state: dict) -> dict:
     for attempt in range(max_retries):
         try:
             # We use gemini-1.5-flash as the actual current model version
-            llm = ChatGoogleGenerativeAI(model="gemini-3.6-flash", temperature=0.1, max_retries=1, timeout=10.0)
+            llm = ChatGoogleGenerativeAI(model="gemini-1.5-flash", temperature=0.1, max_retries=1, timeout=10.0)
             structured_llm = llm.with_structured_output(RecommendationResponse)
             
             response = structured_llm.invoke(prompt)

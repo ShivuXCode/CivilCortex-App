@@ -66,6 +66,9 @@ def run_analysis_job(job_id: str, test_db=None):
             job.completed_at = datetime.now(timezone.utc)
             db.commit()
             return
+            
+        inspection.status = "AI_ANALYSIS"
+        db.commit()
         
         # Execute the AnalysisService
         try:
@@ -81,6 +84,7 @@ def run_analysis_job(job_id: str, test_db=None):
             # Transition to COMPLETED
             job.status = "COMPLETED"
             job.completed_at = datetime.now(timezone.utc)
+            inspection.status = "ASSESSMENT_READY"
             db.commit()
             logger.info(f"Job {job_id} completed successfully.")
             
@@ -89,12 +93,14 @@ def run_analysis_job(job_id: str, test_db=None):
             job.status = "FAILED"
             job.error_message = e.code
             job.completed_at = datetime.now(timezone.utc)
+            inspection.status = "FAILED"
             db.commit()
         except Exception as e:
-            logger.error(f"Unhandled error during analysis execution for job {job_id}: {e}", exc_info=True)
+            logger.error(f"Unexpected error during analysis execution for job {job_id}: {str(e)}")
             job.status = "FAILED"
             job.error_message = "INTERNAL_ERROR"
             job.completed_at = datetime.now(timezone.utc)
+            inspection.status = "FAILED"
             db.commit()
             
     finally:

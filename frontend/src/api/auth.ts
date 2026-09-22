@@ -20,10 +20,13 @@ export const login = async (email: string, password: string) => {
   return response.data;
 };
 
-export const register = async (email: string, password: string, inviteToken?: string) => {
+export const register = async (email: string, password: string, fullName: string, organizationName: string, role: string, inviteToken?: string) => {
   const response = await apiClient.post('/auth/register', {
     email,
     password,
+    full_name: fullName,
+    organization_name: organizationName,
+    role,
     invite_token: inviteToken || undefined
   });
   return response.data;

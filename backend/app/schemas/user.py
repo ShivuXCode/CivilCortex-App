@@ -11,6 +11,9 @@ import re
 class UserCreate(UserBase):
     password: str = Field(min_length=8)
     invite_token: Optional[str] = None
+    full_name: str = Field(min_length=1)
+    organization_name: str = Field(min_length=1)
+    role: str = Field(pattern="^(INSPECTOR|ENGINEER|ADMIN)$")
 
     @field_validator('password')
     @classmethod

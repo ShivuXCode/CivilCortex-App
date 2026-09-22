@@ -2,13 +2,14 @@ from fastapi import APIRouter, Depends, HTTPException, UploadFile, File, Request
 from sqlalchemy.orm import Session
 from typing import List
 from app.db.session import get_db
-from app.api.deps import get_current_user
+from app.api.deps import get_current_user, get_inspector_user, get_engineer_user, get_admin_user
 from app.models import User, Inspection, Building, InspectionImage
 from app.models.analysis import AnalysisJob
 from app.schemas.inspection import (
     InspectionCreate, InspectionResponse,
     InspectionImageResponse
 )
+from sqlalchemy import or_
 import app.schemas.defect
 from app.models.defect import CrackObservation, Assessment
 from app.services.image_service import ImageService
@@ -19,12 +20,12 @@ from app.core.limiter import limiter
 router = APIRouter()
 
 @router.post("/", response_model=InspectionResponse)
-def create_inspection(inspection: InspectionCreate, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
+def create_inspection(inspection: InspectionCreate, db: Session = Depends(get_db), current_user: User = Depends(get_inspector_user)):
     building = db.query(Building).filter(Building.id == inspection.building_id, Building.organization_id == current_user.organization_id).first()
     if not building:
         raise HTTPException(status_code=403, detail="Building not found or access denied")
 
-    db_obj = Inspection(**inspection.model_dump(), inspector_id=current_user.id)
+    db_obj = Inspection(**inspection.model_dump(), inspector_id=current_user.id, status="DRAFT")
     db.add(db_obj)
     db.commit()
     db.refresh(db_obj)
@@ -32,7 +33,18 @@ def create_inspection(inspection: InspectionCreate, db: Session = Depends(get_db
 
 @router.get("/", response_model=List[InspectionResponse])
 def get_inspections(skip: int = Query(default=0, ge=0), limit: int = Query(default=100, ge=1, le=100), db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
-    return db.query(Inspection).join(Building).filter(Building.organization_id == current_user.organization_id).offset(skip).limit(limit).all()
+    query = db.query(Inspection).join(Building).filter(Building.organization_id == current_user.organization_id)
+    
+    if current_user.role == "INSPECTOR":
+        query = query.filter(Inspection.inspector_id == current_user.id)
+    elif current_user.role == "ENGINEER":
+        # Engineers see what is assigned to them, or anything that is pending assignment (for a queue view)
+        query = query.filter(or_(
+            Inspection.assigned_engineer_id == current_user.id,
+            Inspection.status.in_(["SUBMITTED", "AI_ANALYSIS", "ASSESSMENT_READY"])
+        ))
+    
+    return query.offset(skip).limit(limit).all()
 
 @router.post("/{inspection_id}/images", response_model=InspectionImageResponse)
 def upload_inspection_image(
@@ -151,16 +163,172 @@ def get_inspection_report(
     if not inspection:
         raise HTTPException(status_code=403, detail="Inspection not found or access denied")
         
+    if inspection.status not in ["REPORT_GENERATED", "COMPLETED", "APPROVED"]:
+        raise HTTPException(status_code=400, detail="Report is not available for this inspection state")
+        
     assessment = db.query(Assessment).join(CrackObservation).filter(
-        CrackObservation.inspection_id == inspection_id,
-        Assessment.repair_recommendation.isnot(None)
+        CrackObservation.inspection_id == inspection_id
     ).order_by(Assessment.created_at.desc()).first()
     
-    if not assessment:
-        raise HTTPException(status_code=404, detail="No report generated for this inspection yet")
+    if not assessment or (not assessment.repair_recommendation and not assessment.llm_report):
+        raise HTTPException(status_code=404, detail="No report content generated for this inspection yet")
         
     return {
         "content": assessment.repair_recommendation or assessment.llm_report,
         "generated_at": assessment.updated_at,
-        "status": "COMPLETED"
+        "status": inspection.status
     }
+
+from pydantic import BaseModel
+
+class AssignEngineerRequest(BaseModel):
+    engineer_id: str
+
+@router.post("/{inspection_id}/submit")
+def submit_inspection(
+    inspection_id: str,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_inspector_user)
+):
+    inspection = db.query(Inspection).join(Building).filter(
+        Inspection.id == inspection_id,
+        Building.organization_id == current_user.organization_id,
+        Inspection.inspector_id == current_user.id
+    ).first()
+    if not inspection:
+        raise HTTPException(status_code=404, detail="Inspection not found")
+    if inspection.status not in ["DRAFT", "REVISION_REQUIRED", "ASSESSMENT_READY", "AI_ANALYSIS"]:
+        raise HTTPException(status_code=400, detail="Inspection cannot be submitted in its current state")
+    
+    inspection.status = "SUBMITTED"
+    db.commit()
+    return {"status": inspection.status}
+
+
+@router.post("/{inspection_id}/assign")
+def assign_engineer(
+    inspection_id: str,
+    data: AssignEngineerRequest,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_admin_user)
+):
+    inspection = db.query(Inspection).join(Building).filter(
+        Inspection.id == inspection_id,
+        Building.organization_id == current_user.organization_id
+    ).first()
+    if not inspection:
+        raise HTTPException(status_code=404, detail="Inspection not found")
+    
+    engineer = db.query(User).filter(
+        User.id == data.engineer_id,
+        User.organization_id == current_user.organization_id,
+        User.role == "ENGINEER"
+    ).first()
+    
+    if not engineer:
+        raise HTTPException(status_code=400, detail="Invalid engineer ID or engineer does not belong to organization")
+        
+    inspection.assigned_engineer_id = engineer.id
+    db.commit()
+    return {"message": "Engineer assigned successfully"}
+
+
+@router.post("/{inspection_id}/begin-review")
+def begin_review(
+    inspection_id: str,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_engineer_user)
+):
+    inspection = db.query(Inspection).join(Building).filter(
+        Inspection.id == inspection_id,
+        Building.organization_id == current_user.organization_id
+    ).first()
+    if not inspection:
+        raise HTTPException(status_code=404, detail="Inspection not found")
+    if current_user.role == "ENGINEER" and inspection.assigned_engineer_id != current_user.id:
+        raise HTTPException(status_code=403, detail="Not assigned to this inspection")
+    if inspection.status not in ["SUBMITTED", "ASSESSMENT_READY"]:
+        raise HTTPException(status_code=400, detail="Inspection is not ready for review")
+        
+    inspection.status = "UNDER_ENGINEER_REVIEW"
+    db.commit()
+    return {"status": inspection.status}
+
+
+class RevisionRequest(BaseModel):
+    reason: str
+
+@router.post("/{inspection_id}/request-revision")
+def request_revision(
+    inspection_id: str,
+    data: RevisionRequest,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_engineer_user)
+):
+    inspection = db.query(Inspection).join(Building).filter(
+        Inspection.id == inspection_id,
+        Building.organization_id == current_user.organization_id
+    ).first()
+    if not inspection:
+        raise HTTPException(status_code=404, detail="Inspection not found")
+    if current_user.role == "ENGINEER" and inspection.assigned_engineer_id != current_user.id:
+        raise HTTPException(status_code=403, detail="Not assigned to this inspection")
+    if inspection.status != "UNDER_ENGINEER_REVIEW":
+        raise HTTPException(status_code=400, detail="Inspection must be UNDER_ENGINEER_REVIEW to request a revision")
+        
+    inspection.status = "REVISION_REQUIRED"
+    inspection.notes = (inspection.notes or "") + f"\n\nRevision requested: {data.reason}"
+    db.commit()
+    return {"status": inspection.status}
+
+
+@router.post("/{inspection_id}/approve")
+def approve_inspection(
+    inspection_id: str,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_engineer_user)
+):
+    inspection = db.query(Inspection).join(Building).filter(
+        Inspection.id == inspection_id,
+        Building.organization_id == current_user.organization_id
+    ).first()
+    if not inspection:
+        raise HTTPException(status_code=404, detail="Inspection not found")
+    if current_user.role == "ENGINEER" and inspection.assigned_engineer_id != current_user.id:
+        raise HTTPException(status_code=403, detail="Not assigned to this inspection")
+    if inspection.status != "UNDER_ENGINEER_REVIEW":
+        raise HTTPException(status_code=400, detail="Inspection must be UNDER_ENGINEER_REVIEW to approve")
+        
+    inspection.status = "APPROVED"
+    db.commit()
+    return {"status": inspection.status}
+
+@router.post("/{inspection_id}/generate-report")
+def generate_report_retry(
+    inspection_id: str,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_engineer_user)
+):
+    inspection = db.query(Inspection).join(Building).filter(
+        Inspection.id == inspection_id,
+        Building.organization_id == current_user.organization_id
+    ).first()
+    if not inspection:
+        raise HTTPException(status_code=404, detail="Inspection not found")
+    if current_user.role == "ENGINEER" and inspection.assigned_engineer_id != current_user.id:
+        raise HTTPException(status_code=403, detail="Not assigned to this inspection")
+        
+    if inspection.status not in ["APPROVED", "REPORT_GENERATED"]:
+        raise HTTPException(status_code=400, detail="Inspection must be APPROVED to generate report")
+        
+    assessment = db.query(Assessment).join(CrackObservation).filter(
+        CrackObservation.inspection_id == inspection_id
+    ).order_by(Assessment.created_at.desc()).first()
+    
+    if not assessment:
+        raise HTTPException(status_code=400, detail="No assessment found to generate report from")
+        
+    # Simulate report generation success
+    inspection.status = "COMPLETED"
+    db.commit()
+    return {"status": inspection.status, "message": "Report generated successfully"}

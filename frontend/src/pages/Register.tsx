@@ -5,8 +5,12 @@ import { register as registerApi, login } from '../api/auth';
 import { Button, Input, Card, CardContent, CardHeader, CardTitle } from '../components/ui';
 
 export const Register = () => {
+  const [fullName, setFullName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
+  const [organizationName, setOrganizationName] = useState('');
+  const [role, setRole] = useState('INSPECTOR');
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   
@@ -18,11 +22,17 @@ export const Register = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
+    
+    if (password !== confirmPassword) {
+      setError('Passwords do not match');
+      return;
+    }
+    
     setIsLoading(true);
 
     try {
       // 1. Register the user
-      await registerApi(email, password, inviteToken || undefined);
+      await registerApi(email, password, fullName, organizationName, role, inviteToken || undefined);
       // 2. Automatically log them in
       const data = await login(email, password);
       loginSuccess(data.access_token, data.refresh_token);
@@ -57,6 +67,20 @@ export const Register = () => {
               </div>
             )}
             <div className="space-y-2">
+              <label className="text-sm font-medium leading-none text-slate-700" htmlFor="fullName">
+                Full Name
+              </label>
+              <Input
+                id="fullName"
+                type="text"
+                placeholder="Jane Doe"
+                value={fullName}
+                onChange={(e) => setFullName(e.target.value)}
+                required
+                disabled={isLoading}
+              />
+            </div>
+            <div className="space-y-2">
               <label className="text-sm font-medium leading-none text-slate-700" htmlFor="email">
                 Email
               </label>
@@ -84,6 +108,52 @@ export const Register = () => {
                 minLength={8}
               />
               <p className="text-xs text-slate-500">Must be at least 8 characters</p>
+            </div>
+            <div className="space-y-2">
+              <label className="text-sm font-medium leading-none text-slate-700" htmlFor="confirmPassword">
+                Confirm Password
+              </label>
+              <Input
+                id="confirmPassword"
+                type="password"
+                value={confirmPassword}
+                onChange={(e) => setConfirmPassword(e.target.value)}
+                required
+                disabled={isLoading}
+                minLength={8}
+              />
+            </div>
+            {!inviteToken && (
+              <div className="space-y-2">
+                <label className="text-sm font-medium leading-none text-slate-700" htmlFor="organizationName">
+                  Organization / Company Name
+                </label>
+                <Input
+                  id="organizationName"
+                  type="text"
+                  placeholder="Acme Engineering Ltd."
+                  value={organizationName}
+                  onChange={(e) => setOrganizationName(e.target.value)}
+                  required
+                  disabled={isLoading}
+                />
+              </div>
+            )}
+            <div className="space-y-2">
+              <label className="text-sm font-medium leading-none text-slate-700" htmlFor="role">
+                Role
+              </label>
+              <select
+                id="role"
+                className="flex h-10 w-full rounded-md border border-slate-300 bg-transparent px-3 py-2 text-sm placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-slate-400 focus:border-transparent disabled:cursor-not-allowed disabled:opacity-50"
+                value={role}
+                onChange={(e) => setRole(e.target.value)}
+                disabled={isLoading}
+              >
+                <option value="INSPECTOR">Inspector (Field App)</option>
+                <option value="ENGINEER">Engineer (Reviewer)</option>
+                {!inviteToken && <option value="ADMIN">Administrator</option>}
+              </select>
             </div>
             <Button type="submit" className="w-full mt-6" disabled={isLoading}>
               {isLoading ? 'Creating account...' : 'Create Account'}

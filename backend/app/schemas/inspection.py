@@ -15,6 +15,8 @@ class InspectionCreate(InspectionBase):
 class InspectionResponse(InspectionBase):
     id: str
     inspector_id: str
+    assigned_engineer_id: Optional[str] = None
+    status: str
     structural_element_id: Optional[str] = None
     created_at: datetime
     updated_at: datetime

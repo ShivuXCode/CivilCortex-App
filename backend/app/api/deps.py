@@ -57,3 +57,7 @@ class RoleChecker:
                 detail="You do not have permission to perform this action."
             )
         return user
+
+get_inspector_user = RoleChecker(["INSPECTOR", "ADMIN"])
+get_engineer_user = RoleChecker(["ENGINEER", "ADMIN"])
+get_admin_user = RoleChecker(["ADMIN"])

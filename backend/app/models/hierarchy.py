@@ -11,15 +11,18 @@ def generate_uuid():
 class User(Base):
     __tablename__ = "users"
     id = Column(String, primary_key=True, default=generate_uuid)
+    full_name = Column(String, nullable=True)
     email = Column(String, unique=True, index=True, nullable=False)
     hashed_password = Column(String, nullable=False)
     role = Column(String, nullable=False, default="INSPECTOR") # INSPECTOR, ENGINEER, ADMIN
     organization_id = Column(String, nullable=False, index=True)
+    organization_name = Column(String, nullable=True)
     created_at = Column(DateTime, default=datetime.utcnow)
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
 
     buildings = relationship("Building", back_populates="owner")
-    inspections = relationship("Inspection", back_populates="inspector")
+    inspections = relationship("Inspection", foreign_keys="Inspection.inspector_id", back_populates="inspector")
+    assigned_inspections = relationship("Inspection", foreign_keys="Inspection.assigned_engineer_id", back_populates="assigned_engineer")
 
 class Building(Base):
     __tablename__ = "buildings"

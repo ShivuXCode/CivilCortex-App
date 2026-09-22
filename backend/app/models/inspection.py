@@ -13,13 +13,16 @@ class Inspection(Base):
     id = Column(String, primary_key=True, default=generate_uuid)
     building_id = Column(String, ForeignKey("buildings.id"), nullable=False, index=True)
     inspector_id = Column(String, ForeignKey("users.id"), nullable=False, index=True)
+    assigned_engineer_id = Column(String, ForeignKey("users.id"), nullable=True, index=True)
     structural_element_id = Column(String, ForeignKey("structural_elements.id"), nullable=True, index=True)
+    status = Column(String, nullable=False, default="DRAFT", index=True)
     notes = Column(String, nullable=True)
     created_at = Column(DateTime, default=datetime.utcnow)
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
 
     building = relationship("Building", back_populates="inspections")
-    inspector = relationship("User", back_populates="inspections")
+    inspector = relationship("User", foreign_keys=[inspector_id], back_populates="inspections")
+    assigned_engineer = relationship("User", foreign_keys=[assigned_engineer_id])
     images = relationship("InspectionImage", back_populates="inspection", cascade="all, delete-orphan")
     observations = relationship("CrackObservation", back_populates="inspection", cascade="all, delete-orphan")
 

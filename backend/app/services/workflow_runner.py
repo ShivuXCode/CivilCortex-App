@@ -18,7 +18,7 @@ def run_analysis(input_data: AnalysisInput) -> AnalysisResult:
         "rag_evidence": [ev.model_dump() for ev in input_data.rag_evidence] if input_data.rag_evidence else None,
         
         # Inject CV data into LangGraph if possible (LangGraph will populate it, but we can seed it)
-        "crack_detected": input_data.cv_output.defect_type == "crack",
+        "crack_detected": input_data.cv_output.defect_type != "none",
         "crack_probability": input_data.cv_output.confidence,
         "mask_coverage": input_data.cv_output.mask_coverage,
         "component_count": input_data.cv_output.component_count,
@@ -51,7 +51,7 @@ def run_analysis(input_data: AnalysisInput) -> AnalysisResult:
         )
 
     return AnalysisResult(
-        defect_detected=final_state.get("crack_detected", input_data.cv_output.defect_type == "crack"),
+        defect_detected=final_state.get("crack_detected", input_data.cv_output.defect_type != "none"),
         defect_probability=final_state.get("crack_probability", input_data.cv_output.confidence),
         condition=final_state.get("condition"),
         severity=final_state.get("severity"),

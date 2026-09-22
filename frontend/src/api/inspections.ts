@@ -5,6 +5,8 @@ export interface Inspection {
   notes?: string;
   building_id: string;
   inspector_id: string;
+  assigned_engineer_id?: string;
+  status: string;
   created_at: string;
 }
 
@@ -80,5 +82,35 @@ export interface ReportResponse {
 
 export const getReport = async (inspectionId: string): Promise<ReportResponse> => {
   const response = await apiClient.get(`/inspections/${inspectionId}/report`);
+  return response.data;
+};
+
+export const submitInspection = async (inspectionId: string): Promise<{status: string}> => {
+  const response = await apiClient.post(`/inspections/${inspectionId}/submit`);
+  return response.data;
+};
+
+export const assignEngineer = async (inspectionId: string, engineerId: string): Promise<{message: string}> => {
+  const response = await apiClient.post(`/inspections/${inspectionId}/assign`, { engineer_id: engineerId });
+  return response.data;
+};
+
+export const beginReview = async (inspectionId: string): Promise<{status: string}> => {
+  const response = await apiClient.post(`/inspections/${inspectionId}/begin-review`);
+  return response.data;
+};
+
+export const approveInspection = async (inspectionId: string): Promise<{status: string}> => {
+  const response = await apiClient.post(`/inspections/${inspectionId}/approve`);
+  return response.data;
+};
+
+export const requestRevision = async (inspectionId: string, reason: string): Promise<{status: string}> => {
+  const response = await apiClient.post(`/inspections/${inspectionId}/request-revision`, { reason });
+  return response.data;
+};
+
+export const generateReport = async (inspectionId: string): Promise<{status: string, message: string}> => {
+  const response = await apiClient.post(`/inspections/${inspectionId}/generate-report`);
   return response.data;
 };

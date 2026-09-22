@@ -34,7 +34,7 @@ def assess_condition(state: dict) -> dict:
             from langchain_google_genai import ChatGoogleGenerativeAI
             from langchain_core.messages import HumanMessage
             
-            llm = ChatGoogleGenerativeAI(model="gemini-3.6-flash", temperature=0.0)
+            llm = ChatGoogleGenerativeAI(model="gemini-1.5-flash", temperature=0.0)
             structured_llm = llm.with_structured_output(VisionClassificationResponse)
             
             img_b64 = base64.b64encode(image_bytes).decode("utf-8")

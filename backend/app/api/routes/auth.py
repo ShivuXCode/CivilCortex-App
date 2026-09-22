@@ -1,11 +1,11 @@
 from fastapi import APIRouter, Depends, HTTPException, Request
-from sqlalchemy.orm import Session
 from fastapi.security import OAuth2PasswordRequestForm
+from sqlalchemy.orm import Session
 from app.db.session import get_db
-from app.schemas.user import UserCreate, UserResponse, Token
-from app.services.auth_service import AuthService
-from app.api.deps import get_current_user, oauth2_scheme, RoleChecker
+from app.api.deps import get_current_user, get_admin_user, oauth2_scheme, RoleChecker
 from app.models import User
+from app.schemas.user import UserCreate, UserResponse, Token, TokenData
+from app.services.auth_service import AuthService
 from app.core.limiter import limiter
 from app.core.token_blacklist import blacklist_token
 
@@ -34,9 +34,29 @@ def login(request: Request, db: Session = Depends(get_db), form_data: OAuth2Pass
         raise HTTPException(status_code=400, detail="Incorrect email or password")
     return AuthService.create_token_for_user(user)
 
-@router.get("/me", response_model=UserResponse)
-def get_me(current_user: User = Depends(get_current_user)):
-    return current_user
+@router.get("/me", response_model=TokenData)
+def read_users_me(current_user: User = Depends(get_current_user)):
+    return TokenData(
+        email=current_user.email,
+        role=current_user.role,
+        organization_id=current_user.organization_id
+    )
+
+from pydantic import BaseModel
+
+class UserPublic(BaseModel):
+    id: str
+    full_name: str | None
+    email: str
+    role: str
+
+@router.get("/users", response_model=list[UserPublic])
+def get_org_users(
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_admin_user)
+):
+    users = db.query(User).filter(User.organization_id == current_user.organization_id).all()
+    return users
 
 
 @router.post("/logout")

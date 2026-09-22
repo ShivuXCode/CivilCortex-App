@@ -23,14 +23,18 @@ class AuthService:
             org_id = decoded_org
         else:
             org_id = str(uuid.uuid4())
-            assigned_role = "ADMIN"
+            
+        # Use user_in.role if provided, otherwise default to ADMIN for new organizations
+        assigned_role = user_in.role if user_in.role else "ADMIN"
             
         hashed_password = get_password_hash(user_in.password)
         db_user = User(
+            full_name=user_in.full_name,
             email=user_in.email, 
             hashed_password=hashed_password,
             role=assigned_role,
-            organization_id=org_id
+            organization_id=org_id,
+            organization_name=user_in.organization_name
         )
         db.add(db_user)
         db.commit()
