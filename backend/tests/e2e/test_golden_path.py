@@ -51,7 +51,7 @@ class TestGoldenPath:
         # Register
         resp = e2e_client.post(
             "/api/auth/register",
-            json={"email": "golden_inspector@civilcortex-e2e.com", "password": "E2ePassw0rd!"}
+            json={"email": "golden_inspector@civilcortex-e2e.com", "password": "E2ePassw0rd!", "full_name": "Golden Insp", "organization_name": "Golden Org", "role": "INSPECTOR"}
         )
         assert resp.status_code == 200
         data = resp.json()

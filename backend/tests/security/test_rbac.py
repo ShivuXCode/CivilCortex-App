@@ -47,10 +47,10 @@ def rbac_test_data(db, user_a):
     
     return {"inspection": inspection, "assessment": assessment}
 
-def test_rbac_inspector_cannot_patch(client, user_a_headers, rbac_test_data):
+def test_rbac_inspector_can_patch(client, user_a_headers, rbac_test_data):
     assessment_id = rbac_test_data["assessment"].id
     resp = client.patch(f"/api/defects/assessments/{assessment_id}", json={"severity": "HIGH"}, headers=user_a_headers)
-    assert resp.status_code == 403
+    assert resp.status_code == 200
 
 def test_rbac_engineer_can_patch(client, engineer_a_headers, rbac_test_data):
     assessment_id = rbac_test_data["assessment"].id

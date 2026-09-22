@@ -132,7 +132,7 @@ def e2e_client(e2e_db):
 
 def register_and_login(client, email, password="E2ePassw0rd!"):
     """Register (if not exists) and return auth headers."""
-    client.post("/api/auth/register", json={"email": email, "password": password})
+    client.post("/api/auth/register", json={"email": email, "password": password, "full_name": "E2E User", "organization_name": "E2E Org", "role": "INSPECTOR"})
     resp = client.post("/api/auth/login", data={"username": email, "password": password})
     assert resp.status_code == 200, f"Login failed for {email}: {resp.text}"
     token = resp.json()["access_token"]

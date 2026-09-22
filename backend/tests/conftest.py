@@ -88,7 +88,7 @@ def client(db):
 
 @pytest.fixture
 def test_user(client):
-    user_data = {"email": "test@civilcortex.com", "password": "password123"}
+    user_data = {"email": "test@civilcortex.com", "password": "TestPassword123!", "full_name": "Test User", "organization_name": "Org 1", "role": "INSPECTOR"}
     response = client.post("/api/auth/register", json=user_data)
     if response.status_code == 400: # Already registered
         pass
@@ -102,7 +102,7 @@ def auth_headers(client, test_user):
 
 @pytest.fixture
 def user_a(client):
-    user_data = {"email": "inspector_a@civilcortex.com", "password": "password123"}
+    user_data = {"email": "inspector_a@civilcortex.com", "password": "TestPassword123!", "full_name": "Insp A", "organization_name": "Org A", "role": "INSPECTOR"}
     client.post("/api/auth/register", json=user_data)
     return user_data
 
@@ -114,7 +114,7 @@ def user_a_headers(client, user_a):
 
 @pytest.fixture
 def user_b(client):
-    user_data = {"email": "inspector_b@civilcortex.com", "password": "password123"}
+    user_data = {"email": "inspector_b@civilcortex.com", "password": "TestPassword123!", "full_name": "Insp B", "organization_name": "Org B", "role": "INSPECTOR"}
     client.post("/api/auth/register", json=user_data)
     return user_data
 
@@ -127,7 +127,7 @@ def user_b_headers(client, user_b):
 @pytest.fixture
 def engineer_a(client, db, user_a):
     # Engineer needs to be in the same org as user_a for some tests
-    user_data = {"email": "engineer_a@civilcortex.com", "password": "password123"}
+    user_data = {"email": "engineer_a@civilcortex.com", "password": "TestPassword123!", "full_name": "Eng A", "organization_name": "Org A", "role": "ENGINEER"}
     client.post("/api/auth/register", json=user_data)
     
     # Manually promote to engineer and set organization_id
@@ -148,7 +148,7 @@ def engineer_a_headers(client, engineer_a):
 
 @pytest.fixture
 def admin_a(client, db, user_a):
-    user_data = {"email": "admin_a@civilcortex.com", "password": "password123"}
+    user_data = {"email": "admin_a@civilcortex.com", "password": "TestPassword123!", "full_name": "Admin A", "organization_name": "Org A", "role": "ADMIN"}
     client.post("/api/auth/register", json=user_data)
     
     from app.models.hierarchy import User

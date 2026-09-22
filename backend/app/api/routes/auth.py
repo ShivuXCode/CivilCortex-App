@@ -34,13 +34,11 @@ def login(request: Request, db: Session = Depends(get_db), form_data: OAuth2Pass
         raise HTTPException(status_code=400, detail="Incorrect email or password")
     return AuthService.create_token_for_user(user)
 
-@router.get("/me", response_model=TokenData)
+from app.schemas.user import UserResponse
+
+@router.get("/me", response_model=UserResponse)
 def read_users_me(current_user: User = Depends(get_current_user)):
-    return TokenData(
-        email=current_user.email,
-        role=current_user.role,
-        organization_id=current_user.organization_id
-    )
+    return current_user
 
 from pydantic import BaseModel
 

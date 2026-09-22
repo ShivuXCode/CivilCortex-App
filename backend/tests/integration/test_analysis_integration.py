@@ -104,8 +104,8 @@ def test_analyze_unauthorized_access(client, auth_headers, db):
     img_id = resp.json()["id"]
     
     # User 2 logs in
-    client.post("/api/auth/register", json={"email": "hacker2@test.com", "password": "password123"})
-    resp2 = client.post("/api/auth/login", data={"username": "hacker2@test.com", "password": "password123"})
+    client.post("/api/auth/register", json={"email": "hacker2@test.com", "password": "TestPassword123!", "full_name": "Hacker", "organization_name": "Hacker Org", "role": "INSPECTOR"})
+    resp2 = client.post("/api/auth/login", data={"username": "hacker2@test.com", "password": "TestPassword123!"})
     hacker_headers = {"Authorization": f"Bearer {resp2.json()['access_token']}"}
     
     # Try to analyze User 1's image

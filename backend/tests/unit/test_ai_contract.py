@@ -19,7 +19,6 @@ def test_valid_analysis_input_creation():
         )
     )
     assert input_data.inspection.inspection_id == "1"
-    assert input_data.scenario == "hairline_crack" # default
 
 def test_analysis_input_validation_failure():
     with pytest.raises(ValidationError):

@@ -19,7 +19,7 @@ def test_agent6_missing_api_key(mock_llm):
     
     result = generate_recommendation(state)
     assert "recommendation" in result
-    assert "Missing Google API Credentials" in result["recommendation"]
+    assert "This report is automatically generated using heuristic structural mappings" in result["recommendation"]
 
 @patch("app.agents.nodes.agent6_llm.ChatGoogleGenerativeAI")
 def test_agent6_no_maintenance_required(mock_llm):

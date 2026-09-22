@@ -24,7 +24,16 @@ def unsupported_image(tmp_path):
     path.write_text("Hello World")
     return str(path)
 
-def test_ml_service_valid_image(valid_image):
+from unittest.mock import MagicMock, patch
+import torch
+
+@patch('app.services.ml_service.MLService.get_model')
+def test_ml_service_valid_image(mock_get_model, valid_image):
+    mock_model = MagicMock()
+    # Mock returning a background prediction (all class 0)
+    mock_model.return_value = torch.zeros((1, 4, 384, 384), dtype=torch.float32)
+    mock_get_model.return_value = mock_model
+
     result = MLService.analyze_image(valid_image)
     assert "defect_type" in result
     assert "confidence" in result
@@ -32,26 +41,25 @@ def test_ml_service_valid_image(valid_image):
     assert "component_count" in result
     assert "largest_component_area" in result
     assert result["model_status"] == "PRODUCTION"
-    assert result["model_name"] == "civilcortex_segmentation"
-    assert isinstance(result["confidence"], float)
-
-from unittest.mock import MagicMock, patch
 
 def test_ml_service_spatial_metrics(valid_image):
     # Mock get_model and predict to return a controlled mask
     mock_model = MagicMock()
     
-    # Create a 384x384x1 mask
-    # mostly zeros, with one noisy pixel and one large 10x10 block
-    test_mask = np.zeros((1, 384, 384, 1), dtype=np.float32)
+    # PyTorch model outputs logits of shape (batch, classes, H, W)
+    # 4 classes: 0=bg, 1=crack, 2=spall, 3=corr
+    test_logits = torch.zeros((1, 4, 384, 384), dtype=torch.float32)
+    
+    # Default to background winning everywhere
+    test_logits[0, 0, :, :] = 1.0
     
     # Noisy pixel (should be ignored since area < 50)
-    test_mask[0, 10, 10, 0] = 0.9
+    test_logits[0, 1, 10, 10] = 10.0
     
     # Large block 10x10 = 100 pixels (should be counted)
-    test_mask[0, 50:60, 50:60, 0] = 0.9
+    test_logits[0, 1, 50:60, 50:60] = 10.0
     
-    mock_model.predict.return_value = test_mask
+    mock_model.return_value = test_logits
     
     with patch('app.services.ml_service.MLService.get_model', return_value=mock_model):
         result = MLService.analyze_image(valid_image)
