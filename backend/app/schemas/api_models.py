@@ -1,5 +1,5 @@
 from typing import List, Optional, Dict, Any
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, ConfigDict, Field
 from datetime import datetime
 
 # Common
@@ -22,8 +22,7 @@ class UserCreate(UserBase):
 class UserResponse(UserBase):
     id: int
     created_at: datetime
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 # Buildings
 class BuildingBase(BaseModel):
@@ -38,8 +37,8 @@ class BuildingResponse(BuildingBase):
     health_score: Optional[int] = 100
     user_id: int
     created_at: datetime
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
+
 
 # Inspections
 class InspectionBase(BaseModel):
@@ -54,8 +53,8 @@ class InspectionResponse(InspectionBase):
     id: int
     inspector_id: int
     created_at: datetime
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
+
 
 # Cracks
 class CrackBase(BaseModel):
@@ -68,10 +67,10 @@ class CrackCreate(CrackBase):
 class CrackResponse(CrackBase):
     id: int
     first_detected_at: datetime
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
-from pydantic import BaseModel, Field, model_validator
+
+from pydantic import BaseModel, ConfigDict, Field, model_validator, validator, ConfigDict
 
 class CVMeasurement(BaseModel):
     pixel_length: Optional[float] = None
@@ -147,8 +146,8 @@ class ObservationBase(BaseModel):
 class ObservationResponse(ObservationBase):
     id: int
     created_at: datetime
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
+
 
 # Assessments
 class SeverityAssessmentResponse(BaseModel):
@@ -157,8 +156,8 @@ class SeverityAssessmentResponse(BaseModel):
     level: str
     score: Optional[float]
     factors_json: Optional[Dict[str, Any]]
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
+
 
 class RiskAssessmentResponse(BaseModel):
     id: int
@@ -166,8 +165,8 @@ class RiskAssessmentResponse(BaseModel):
     level: str
     score: float
     factors_json: Optional[Dict[str, Any]]
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
+
 
 class PriorityAssessmentResponse(BaseModel):
     id: int
@@ -175,8 +174,8 @@ class PriorityAssessmentResponse(BaseModel):
     level: str
     max_days: Optional[int]
     factors_json: Optional[Dict[str, Any]]
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
+
 
 class CostEstimateResponse(BaseModel):
     id: int
@@ -186,16 +185,16 @@ class CostEstimateResponse(BaseModel):
     total_range_low: float
     total_range_high: float
     details_json: Optional[Dict[str, Any]]
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
+
 
 class RepairPlanResponse(BaseModel):
     id: int
     method_name: str
     description: Optional[str]
     cost_estimate: Optional[CostEstimateResponse]
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
+
 
 class ObservationCreate(BaseModel):
     image_base64: Optional[str] = None

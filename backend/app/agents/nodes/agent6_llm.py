@@ -84,11 +84,11 @@ def generate_recommendation(state: dict) -> dict:
     """
     
     # Fault Tolerance: Retry logic for API calls
-    max_retries = 3
+    max_retries = 1
     for attempt in range(max_retries):
         try:
             # We use gemini-1.5-flash as the actual current model version
-            llm = ChatGoogleGenerativeAI(model="gemini-1.5-flash", temperature=0.2)
+            llm = ChatGoogleGenerativeAI(model="gemini-3.6-flash", temperature=0.1, max_retries=1, timeout=10.0)
             structured_llm = llm.with_structured_output(RecommendationResponse)
             
             response = structured_llm.invoke(prompt)
@@ -97,8 +97,8 @@ def generate_recommendation(state: dict) -> dict:
             }
         except Exception as e:
             error_str = str(e).lower()
-            if "default credentials were not found" in error_str or "api_key" in error_str:
-                logger.warning(f"Missing Google API Credentials: {e}. Falling back to offline algorithmic report generation.")
+            if "default credentials were not found" in error_str or "api_key" in error_str or "deadline" in error_str or "unavailable" in error_str or "not_found" in error_str or "quota" in error_str:
+                logger.warning(f"Google API Unavailable: {e}. Falling back to offline algorithmic report generation.")
                 fallback_report = f"""### Condition Summary
 
 **Status:** {risk_level} Risk

@@ -1,8 +1,8 @@
 import sys
 from sqlalchemy.orm import Session
-from core.database import SessionLocal
-from models.domain_models import Inspection
-from services.pdf_generator import generate_inspection_pdf
+from app.core.database import SessionLocal
+from app.models.inspection import Inspection
+from app.services.pdf_generator import generate_inspection_pdf
 
 db: Session = SessionLocal()
 insp = db.query(Inspection).first()

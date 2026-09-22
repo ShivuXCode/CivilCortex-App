@@ -38,7 +38,7 @@ def plan_maintenance(state: dict) -> dict:
         
     # 2. Use LLM to determine the best action, strictly grounded in the retrieved RAG Context
     try:
-        llm = ChatGoogleGenerativeAI(model="gemini-3.6-flash", temperature=0.1)
+        llm = ChatGoogleGenerativeAI(model="gemini-3.6-flash", temperature=0.1, max_retries=1, timeout=10.0)
         structured_llm = llm.with_structured_output(MaintenanceActionResponse)
         
         prompt = f"""

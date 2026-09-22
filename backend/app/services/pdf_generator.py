@@ -40,7 +40,19 @@ def generate_inspection_pdf(inspection):
     pdf.set_auto_page_break(auto=True, margin=25)
     pdf.add_page()
     
-    report_data = inspection.full_report_json or {}
+    # Find the latest assessment
+    report_data = {}
+    if inspection.observations:
+        for obs in inspection.observations:
+            if obs.assessment and obs.assessment.repair_recommendation:
+                # Try parsing the string to JSON if it's stored as JSON string
+                import json
+                try:
+                    report_data = json.loads(obs.assessment.repair_recommendation)
+                except Exception:
+                    # If it's a plain string, use it directly under a generic key
+                    report_data = {"summary": obs.assessment.repair_recommendation}
+                break
 
     # 1. Inspection Overview
     pdf.set_font("helvetica", "B", 13)
@@ -86,6 +98,16 @@ def generate_inspection_pdf(inspection):
     
     pdf.set_font("helvetica", "", 9)
     recommendation_text = str(report_data.get("recommendation", "No recommendation generated."))
+    
+    # Check if recommendation is a fallback JSON string
+    try:
+        import json
+        parsed_rec = json.loads(recommendation_text)
+        if isinstance(parsed_rec, dict) and "status" in parsed_rec:
+            recommendation_text = f"Status: {parsed_rec.get('status')}\nReason: {parsed_rec.get('reason')}\n\n{parsed_rec.get('details', '')}"
+    except Exception:
+        pass # Not a JSON string, which is normal for Markdown reports
+
     # Clean markdown headers for plain PDF rendering
     cleaned_rec = recommendation_text.replace("### ", "").replace("## ", "").replace("**", "")
     pdf.multi_cell(0, 5, sanitize_text(cleaned_rec), align="L")

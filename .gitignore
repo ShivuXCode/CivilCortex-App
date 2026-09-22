@@ -69,3 +69,4 @@ coverage.xml
 *.cover
 .coverage
 htmlcov/
+backend/chroma_db/

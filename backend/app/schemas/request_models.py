@@ -1,5 +1,5 @@
 from typing import Optional
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, ConfigDict, Field
 
 class MaintenanceRequest(BaseModel):
     crack_type: str = Field(default="Structural", description="Type of crack observed")

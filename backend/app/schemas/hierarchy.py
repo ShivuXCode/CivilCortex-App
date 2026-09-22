@@ -1,4 +1,4 @@
-from pydantic import BaseModel
+from pydantic import BaseModel, ConfigDict
 from typing import List, Optional
 from datetime import datetime
 
@@ -15,8 +15,8 @@ class BuildingResponse(BuildingBase):
     created_at: datetime
     updated_at: datetime
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
+
 
 class FloorBase(BaseModel):
     name: str
@@ -31,8 +31,8 @@ class FloorResponse(FloorBase):
     created_at: datetime
     updated_at: datetime
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
+
 
 class AreaBase(BaseModel):
     name: str
@@ -46,8 +46,8 @@ class AreaResponse(AreaBase):
     created_at: datetime
     updated_at: datetime
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
+
 
 class StructuralElementBase(BaseModel):
     name: str
@@ -62,5 +62,5 @@ class StructuralElementResponse(StructuralElementBase):
     created_at: datetime
     updated_at: datetime
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
+

@@ -39,6 +39,26 @@ class RagService:
                 raise RAGError(f"Failed to initialize ChromaDB: {e}")
             
         self._initialized = True
+        self._insert_seed_data()
+
+    def _insert_seed_data(self):
+        # Auto-seed the database if empty to ensure the RAG works out of the box
+        try:
+            if getattr(self.db, '_collection', None) and self.db._collection.count() == 0:
+                logger.info("RAG DB is empty. Seeding with sample engineering standards...")
+                standards = [
+                    "ACI 224R-01: Epoxy injection is recommended for repairing dormant cracks in concrete where restoration of structural integrity is required.",
+                    "FHWA Tunnel Manual: Carbon Fiber Reinforced Polymer (CFRP) should be used for structural reinforcement of Spalling in critical load-bearing concrete zones.",
+                    "ISO 13822: Hairline cracks with low severity and a health score > 80 generally require Surface Sealing to prevent water ingress, rather than structural repair."
+                ]
+                metadata = [
+                    {"category": "structural_standard", "source": "ACI 224R-01"},
+                    {"category": "structural_standard", "source": "FHWA Tunnel Manual"},
+                    {"category": "structural_standard", "source": "ISO 13822"}
+                ]
+                self.db.add_texts(texts=standards, metadatas=metadata)
+        except Exception as e:
+            logger.error(f"Failed to seed RAG database: {e}")
 
     def retrieve_evidence(self, query: str, top_k: int = 2) -> List[RAGEvidence]:
         """

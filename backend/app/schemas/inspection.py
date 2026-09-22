@@ -1,4 +1,4 @@
-from pydantic import BaseModel
+from pydantic import BaseModel, ConfigDict
 from typing import List, Optional
 from datetime import datetime
 
@@ -19,8 +19,8 @@ class InspectionResponse(InspectionBase):
     created_at: datetime
     updated_at: datetime
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
+
 
 class InspectionImageBase(BaseModel):
     inspection_id: str
@@ -35,5 +35,5 @@ class InspectionImageResponse(InspectionImageBase):
     object_key: str
     created_at: datetime
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
+
