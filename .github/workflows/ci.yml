@@ -32,7 +32,7 @@ jobs:
           - 6379:6379
 
       minio:
-        image: minio/minio
+        image: quay.io/minio/minio:latest
         ports:
           - 9000:9000
         env:
