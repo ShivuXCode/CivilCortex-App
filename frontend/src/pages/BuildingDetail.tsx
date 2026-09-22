@@ -3,10 +3,12 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle, Button } from '../components/ui';
 import { getBuilding, BuildingDetail as IBuildingDetail } from '../api/hierarchy';
 import { ArrowLeft } from 'lucide-react';
+import { useAuth } from '../hooks/useAuth';
 
 export const BuildingDetail = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
+  const { user } = useAuth();
   const [building, setBuilding] = useState<IBuildingDetail | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
@@ -40,9 +42,11 @@ export const BuildingDetail = () => {
         </div>
       </div>
 
-      <div className="flex justify-end gap-3">
-        <Button onClick={() => navigate('/inspections/new')}>Start Inspection</Button>
-      </div>
+      {user?.role === 'INSPECTOR' && (
+        <div className="flex justify-end gap-3">
+          <Button onClick={() => navigate('/inspections/new')}>Start Inspection</Button>
+        </div>
+      )}
 
       <Card>
         <CardHeader>
