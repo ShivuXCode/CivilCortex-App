@@ -42,11 +42,9 @@ export const BuildingDetail = () => {
         </div>
       </div>
 
-      {user?.role === 'INSPECTOR' && (
-        <div className="flex justify-end gap-3">
-          <Button onClick={() => navigate('/inspections/new')}>Start Inspection</Button>
-        </div>
-      )}
+      <div className="flex justify-end gap-3">
+        <Button onClick={() => navigate('/inspections/new')}>Start Inspection</Button>
+      </div>
 
       <Card>
         <CardHeader>

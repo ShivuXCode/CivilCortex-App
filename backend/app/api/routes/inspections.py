@@ -31,18 +31,21 @@ def create_inspection(inspection: InspectionCreate, db: Session = Depends(get_db
     db.refresh(db_obj)
     return db_obj
 
+from app.api.deps import ENFORCE_RBAC
+
 @router.get("/", response_model=List[InspectionResponse])
 def get_inspections(skip: int = Query(default=0, ge=0), limit: int = Query(default=100, ge=1, le=100), db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
     query = db.query(Inspection).join(Building).filter(Building.organization_id == current_user.organization_id)
     
-    if current_user.role == "INSPECTOR":
-        query = query.filter(Inspection.inspector_id == current_user.id)
-    elif current_user.role == "ENGINEER":
-        # Engineers see what is assigned to them, or anything that is pending assignment (for a queue view)
-        query = query.filter(or_(
-            Inspection.assigned_engineer_id == current_user.id,
-            Inspection.status.in_(["SUBMITTED", "AI_ANALYSIS", "ASSESSMENT_READY"])
-        ))
+    if ENFORCE_RBAC:
+        if current_user.role == "INSPECTOR":
+            query = query.filter(Inspection.inspector_id == current_user.id)
+        elif current_user.role == "ENGINEER":
+            # Engineers see what is assigned to them, or anything that is pending assignment (for a queue view)
+            query = query.filter(or_(
+                Inspection.assigned_engineer_id == current_user.id,
+                Inspection.status.in_(["SUBMITTED", "AI_ANALYSIS", "ASSESSMENT_READY"])
+            ))
     
     return query.offset(skip).limit(limit).all()
 
