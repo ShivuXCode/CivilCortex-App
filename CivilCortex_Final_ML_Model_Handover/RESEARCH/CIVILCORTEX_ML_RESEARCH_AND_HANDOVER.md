@@ -46,6 +46,7 @@ The Damage Detection dataset (XML bounding boxes) was not used because directly 
 - 1,200 images with pixel-level segmentation.
 - Official Split: Train = 1,000 | Validation = 100 | Test = 100
 - Multi-class segmentation focusing on crack, spalling, exposed rebar, and corrosion.
+- **Licensing Note**: MDMCS is used strictly under academic fair-use for research benchmarking purposes. It is currently flagged as `production_training_eligible = False` for commercial use.
 
 ## 9. Reinforced Concrete Segmentation Dataset Details
 - 1,841 images with detailed JSON polygon annotations.
@@ -75,6 +76,8 @@ Structural deformation was mapped to **255 (IGNORE)**. It is outside the current
 - **Train**: 2,472
 - **Validation**: 284
 - **Test**: 285
+
+**CRITICAL DATA LEAKAGE LIMITATION**: The dataset splitting did not enforce strict building-level or site-level isolation. Because frames of the same physical structure or crack from slightly different angles could randomly appear in both the training and test sets, the reported test metrics (0.6734 mIoU) may be artificially inflated by data memorization. Generalization to entirely unseen buildings remains unproven.
 
 **MDMCS official split**:
 - Train = 1,000
