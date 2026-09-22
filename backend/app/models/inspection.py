@@ -13,6 +13,7 @@ class Inspection(Base):
     id = Column(String, primary_key=True, default=generate_uuid)
     building_id = Column(String, ForeignKey("buildings.id"), nullable=False, index=True)
     inspector_id = Column(String, ForeignKey("users.id"), nullable=False, index=True)
+    structural_element_id = Column(String, ForeignKey("structural_elements.id"), nullable=True, index=True)
     notes = Column(String, nullable=True)
     created_at = Column(DateTime, default=datetime.utcnow)
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)

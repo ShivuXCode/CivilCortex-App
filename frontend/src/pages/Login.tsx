@@ -24,6 +24,8 @@ export const Login = () => {
     } catch (err: any) {
       if (err.response?.status === 400 || err.response?.status === 401) {
         setError('Incorrect email or password.');
+      } else if (err.civilCortexMessage) {
+        setError(err.civilCortexMessage);
       } else {
         setError('Unable to connect to CivilCortex. Please check that the backend is running.');
       }

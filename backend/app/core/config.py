@@ -45,10 +45,6 @@ class Settings(BaseSettings):
     MINIO_SECURE: bool = False
     MINIO_BUCKET_NAME: str = "civilcortex-images"
 
-    # Demo Mode configuration
-    DEMO_MODE: bool = True
-    DEFAULT_DEMO_SCENARIO: str = "hairline_crack"
-    
     # ML Thresholds
     ML_MIN_AREA_THRESHOLD: int = 50
 

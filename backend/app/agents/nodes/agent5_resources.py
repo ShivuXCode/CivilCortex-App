@@ -37,20 +37,7 @@ DEFAULT_RESOURCES = {
     "estimated_cost": "Engineer Quote Required"
 }
 
-from app.core.config import settings
-from app.demo.demo_engine import get_demo_scenario
-
 def optimize_resources(state: dict) -> dict:
-    # 0. Controlled Prototype / Demo Mode Execution
-    if getattr(settings, "DEMO_MODE", False):
-        scenario_id = state.get("scenario") or getattr(settings, "DEFAULT_DEMO_SCENARIO", "hairline_crack")
-        sc = get_demo_scenario(scenario_id)
-        return {
-            "required_workers": sc["required_workers"],
-            "required_materials": sc["required_materials"],
-            "estimated_cost": sc["estimated_cost"]
-        }
-
     # Handle edge case where Agent 4 didn't find a standard
     action = state.get("maintenance_action", "Surface Sealing").lower()
     

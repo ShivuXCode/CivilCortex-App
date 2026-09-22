@@ -5,22 +5,11 @@ import numpy as np
 from pydantic import BaseModel, Field
 from app.core.logger import logger
 
-from app.core.config import settings
-from app.demo.demo_engine import get_demo_condition_state
-
-
 class VisionClassificationResponse(BaseModel):
     crack_type: str = Field(description="The specific type of structural defect identified, e.g. 'Deep Foundation Settlement', 'Spalling', 'Hairline Crack'. If no crack, return 'None'.")
     severity: str = Field(description="The severity level of the defect: 'low', 'medium', or 'high'. If no crack, return 'low'.")
 
 def assess_condition(state: dict) -> dict:
-    # 0. Controlled Prototype / Demo Mode Execution
-    if getattr(settings, "DEMO_MODE", False):
-        scenario_id = state.get("scenario") or getattr(settings, "DEFAULT_DEMO_SCENARIO", "hairline_crack")
-        demo_state = get_demo_condition_state(scenario_id)
-        logger.info(f"[DEMO MODE] Executed scenario '{demo_state['scenario_id']}': {demo_state['crack_type']} (Health: {demo_state['health_score']})")
-        return demo_state
-
     # Real ML Pipeline Execution (Preserved)
     image_bytes = state.get("image_bytes")
     
@@ -69,11 +58,19 @@ def assess_condition(state: dict) -> dict:
             logger.info(f"Gemini Vision Classification: {crack_type} | Severity: {severity}")
             
         except Exception as e:
-            logger.error(f"Gemini classification failed... {e}")
-            if "429" in str(e) or "quota" in str(e).lower() or "exhausted" in str(e).lower():
-                crack_type = "API_ERROR_RATE_LIMIT"
+            logger.warning(f"Gemini classification unavailable/failed ({e}). Falling back to local offline heuristics.")
+            if health_score >= 95:
+                crack_type = "None"
+                severity = "low"
+            elif largest_component_area > 1000 and mask_coverage > 0.05:
+                crack_type = "Spalling"
+                severity = "high"
+            elif component_count > 5:
+                crack_type = "Network/Alligator Cracking"
+                severity = "medium"
             else:
-                crack_type = "API_ERROR_UNKNOWN"
+                crack_type = "Hairline Crack"
+                severity = "low" if health_score >= 80 else "medium"
             
     return {
         "health_score": health_score,

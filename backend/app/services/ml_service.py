@@ -11,7 +11,6 @@ from albumentations.pytorch import ToTensorV2
 
 from app.core.exceptions import ImageProcessingError, CVInferenceError
 from app.core.logger import logger
-from app.core.config import settings
 
 _MODEL_PATH = os.path.join(os.path.dirname(__file__), "../../models/Phase6_ArchDeepLabEff_best.pth")
 
@@ -30,10 +29,9 @@ class MLService:
         if not os.path.exists(_MODEL_PATH):
             logger.warning(
                 f"ML model file not found at '{_MODEL_PATH}'. "
-                "Analysis will fall back to demo/pipeline mode. "
                 "Place 'Phase6_ArchDeepLabEff_best.pth' in backend/models/ to enable real inference."
             )
-            return None
+            raise CVInferenceError(f"ML model file not found at '{_MODEL_PATH}'")
 
         try:
             cls._model = smp.DeepLabV3Plus(
@@ -71,24 +69,6 @@ class MLService:
         model = MLService.get_model()
 
         # --- Graceful fallback when model file is absent ---
-        if model is None:
-            logger.warning("Using demo-mode CV inference (real model unavailable).")
-            from app.services.cv_pipeline import run_demo_inference
-            with open(image_path, "rb") as f:
-                image_bytes = f.read()
-            demo_result = run_demo_inference(image_bytes, image_id=image_path)
-            has_defect = len(demo_result.detections) > 0
-            return {
-                "defect_type": "crack" if has_defect else "none",
-                "confidence": demo_result.detections[0].model_confidence if has_defect else 0.0,
-                "mask_coverage": None,
-                "component_count": len(demo_result.detections),
-                "largest_component_area": None,
-                "model_name": "DEMO_FALLBACK",
-                "model_version": demo_result.model_version,
-                "model_status": "DEMO"
-            }
-
         # --- Real model inference ---
         try:
             image = np.array(Image.open(image_path).convert("RGB"))
@@ -126,7 +106,7 @@ class MLService:
                 num_labels, labels, stats, centroids = cv2.connectedComponentsWithStats(binary_mask, connectivity=8)
                 
                 # Ignore background component
-                MIN_AREA_THRESHOLD = settings.ML_MIN_AREA_THRESHOLD
+                MIN_AREA_THRESHOLD = 50
                 valid_components = [s[cv2.CC_STAT_AREA] for i, s in enumerate(stats) if i > 0 and s[cv2.CC_STAT_AREA] >= MIN_AREA_THRESHOLD]
                 
                 if not valid_components:

@@ -1,0 +1,16 @@
+name: CivilCortex
+architecture: deeplabv3plus
+backbone: efficientnet-b4
+encoder_weights: imagenet
+in_channels: 3
+num_classes: 4
+resolution: 384
+classes:
+  0: Background
+  1: Crack
+  2: Spalling/Delamination
+  3: Corrosion/Exposed Rebar
+ignore_index: 255
+normalization:
+  mean: [0.485, 0.456, 0.406]
+  std: [0.229, 0.224, 0.225]

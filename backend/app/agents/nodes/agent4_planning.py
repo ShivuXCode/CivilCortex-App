@@ -4,23 +4,11 @@ from langchain_chroma import Chroma
 from pydantic import BaseModel, Field
 from app.core.logger import logger
 
-from app.core.config import settings
-from app.demo.demo_engine import get_demo_scenario
-
 class MaintenanceActionResponse(BaseModel):
     maintenance_action: str = Field(description="The specific engineering action required, e.g., 'Concrete Reinforcement'")
     source_document: str = Field(description="The exact name of the source document and section referenced from the context.")
 
 def plan_maintenance(state: dict) -> dict:
-    # 0. Controlled Prototype / Demo Mode Execution
-    if getattr(settings, "DEMO_MODE", False):
-        scenario_id = state.get("scenario") or getattr(settings, "DEFAULT_DEMO_SCENARIO", "hairline_crack")
-        sc = get_demo_scenario(scenario_id)
-        return {
-            "maintenance_action": sc["recommended_action"],
-            "rag_context": sc["rag_context"]
-        }
-
     priority = state.get("priority", "Routine")
     crack_type = state.get("crack_type", "")
     
@@ -69,8 +57,18 @@ def plan_maintenance(state: dict) -> dict:
         response = structured_llm.invoke(prompt)
         maintenance_action = f"{response.maintenance_action} (Source: {response.source_document})"
     except Exception as e:
-        logger.error(f"LLM Error during planning: {e}")
-        maintenance_action = "Manual Engineer Review Required - LLM Error"
+        logger.warning(f"LLM Error during planning ({e}). Falling back to offline heuristic RAG extraction.")
+        context_lower = rag_context_str.lower()
+        if "epoxy" in context_lower or "injection" in context_lower:
+            maintenance_action = "Epoxy Injection (Source: RAG Heuristic Fallback)"
+        elif "carbon" in context_lower or "cfrp" in context_lower:
+            maintenance_action = "Concrete Reinforcement (Source: RAG Heuristic Fallback)"
+        elif "underpinning" in context_lower or "jack" in context_lower:
+            maintenance_action = "Foundation Underpinning (Source: RAG Heuristic Fallback)"
+        elif "seal" in context_lower or "polyurethane" in context_lower:
+            maintenance_action = "Surface Sealing (Source: RAG Heuristic Fallback)"
+        else:
+            maintenance_action = "Spalling Repair (Source: RAG Heuristic Fallback)"
     
     return {
         "maintenance_action": maintenance_action,

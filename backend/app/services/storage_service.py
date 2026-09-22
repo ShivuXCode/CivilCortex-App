@@ -14,6 +14,14 @@ class StorageService:
         self.client = None
         self.bucket_name = settings.MINIO_BUCKET_NAME
         self._available = False
+        self.use_local_fs = not bool(settings.MINIO_ENDPOINT)
+        self.local_dir = settings.STORAGE_ROOT
+
+        if self.use_local_fs:
+            os.makedirs(self.local_dir, exist_ok=True)
+            self._available = True
+            logger.info("StorageService: Using local filesystem mock.")
+            return
 
         try:
             self.client = Minio(
@@ -31,21 +39,26 @@ class StorageService:
             self._available = True
             logger.info("StorageService: MinIO connection established successfully.")
         except Exception as e:
-            # Re-raise as a domain error so it surfaces at startup or first use.
-            # Previously this was swallowed (logger.warning only), making root-cause
-            # diagnosis very difficult in production.
             logger.error(f"StorageService: MinIO initialization failed: {e}")
             raise StorageError(f"MinIO initialization failed: {e}")
 
     def health_check(self) -> bool:
         """Return True if the storage backend is reachable and the bucket exists."""
+        if self.use_local_fs:
+            return True
         try:
             return self._available and self.client is not None and self.client.bucket_exists(self.bucket_name)
         except Exception:
             return False
 
     def upload_file(self, file_obj: BinaryIO, object_key: str, file_size: int, content_type: str = "application/octet-stream") -> str:
-        """Uploads a file object to MinIO."""
+        """Uploads a file object to MinIO or Local FS."""
+        if self.use_local_fs:
+            filepath = os.path.join(self.local_dir, object_key.replace("/", "_"))
+            with open(filepath, "wb") as f:
+                f.write(file_obj.read())
+            return object_key
+
         if not self.client:
             raise StorageError("Storage service is not initialized")
             
@@ -63,7 +76,15 @@ class StorageService:
             raise StorageError(f"Failed to upload to storage: {e}")
             
     def download_file(self, object_key: str, destination_path: str):
-        """Downloads an object from MinIO to a local path."""
+        """Downloads an object from MinIO or Local FS to a local path."""
+        if self.use_local_fs:
+            filepath = os.path.join(self.local_dir, object_key.replace("/", "_"))
+            if not os.path.exists(filepath):
+                raise StorageError("File not found locally")
+            with open(filepath, "rb") as src, open(destination_path, "wb") as dst:
+                dst.write(src.read())
+            return
+
         if not self.client:
             raise StorageError("Storage service is not initialized")
             
@@ -75,6 +96,13 @@ class StorageService:
             
     def get_file_bytes(self, object_key: str) -> bytes:
         """Gets an object directly as bytes."""
+        if self.use_local_fs:
+            filepath = os.path.join(self.local_dir, object_key.replace("/", "_"))
+            if not os.path.exists(filepath):
+                raise StorageError("File not found locally")
+            with open(filepath, "rb") as f:
+                return f.read()
+
         if not self.client:
             raise StorageError("Storage service is not initialized")
             
@@ -89,7 +117,13 @@ class StorageService:
                 response.close()
                 
     def delete_file(self, object_key: str):
-        """Deletes an object from MinIO."""
+        """Deletes an object from MinIO or Local FS."""
+        if self.use_local_fs:
+            filepath = os.path.join(self.local_dir, object_key.replace("/", "_"))
+            if os.path.exists(filepath):
+                os.remove(filepath)
+            return
+
         if not self.client:
             raise StorageError("Storage service is not initialized")
             

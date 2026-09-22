@@ -3,8 +3,7 @@ from pydantic import BaseModel, Field
 import time
 from app.core.logger import logger
 
-from app.core.config import settings
-from app.demo.demo_engine import get_demo_report_text
+
 
 class RecommendationResponse(BaseModel):
     recommendation: str = Field(description="A comprehensive, multi-paragraph recommendation report for stakeholders")
@@ -20,7 +19,8 @@ def generate_recommendation(state: dict) -> dict:
     workers = state.get("required_workers", 0)
     materials = state.get("required_materials", [])
     rag_context = state.get("rag_context", "None provided.")
-    
+
+        
     # Check for API rate limits and connection errors first
     if "API_ERROR_RATE_LIMIT" in crack_type:
         import json
@@ -98,9 +98,34 @@ def generate_recommendation(state: dict) -> dict:
         except Exception as e:
             error_str = str(e).lower()
             if "default credentials were not found" in error_str or "api_key" in error_str:
-                logger.error(f"Missing Google API Credentials: {e}")
+                logger.warning(f"Missing Google API Credentials: {e}. Falling back to offline algorithmic report generation.")
+                fallback_report = f"""### Condition Summary
+
+**Status:** {risk_level} Risk
+The local computer vision model has detected a **{crack_type}**. The structural health score is computed at **{health_score}/100**.
+
+### Maintenance Plan
+
+- **Priority Level:** {priority}
+- **Recommended Action:** {action}
+- **Estimated Cost:** {cost}
+- **Required Workers:** {workers}
+
+### Required Materials
+"""
+                for mat in materials:
+                    fallback_report += f"- {mat}\n"
+                    
+                fallback_report += f"""
+### Regulatory Standards & Context
+*The following standards were retrieved using local offline RAG:*
+
+{rag_context}
+
+**WARNING: This report is automatically generated using heuristic structural mappings and local AI classification. It does not replace the requirement for a certified structural engineering review.**"""
+
                 return {
-                    "recommendation": "Error: Missing Google API Credentials. Unable to generate engineering report. Please set GOOGLE_API_KEY."
+                    "recommendation": fallback_report
                 }
             
             logger.error(f"LLM API Error on attempt {attempt + 1}: {e}")

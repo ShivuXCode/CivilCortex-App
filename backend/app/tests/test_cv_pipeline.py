@@ -2,7 +2,7 @@ import pytest
 import os
 from datetime import datetime, timezone
 from app.schemas.api_models import CVAnalysisResult, CVDetection, CVGeometry, CVMeasurement, ImageQualityResult
-from app.services.cv_pipeline import ImageQualityGate, run_demo_inference
+from app.services.cv_pipeline import ImageQualityGate
 from app.models.domain_models import ImageQualityRejectionReason, ImageStatus, DefectType, CrackMorphology, CalibrationStatus
 
 def test_taxonomy_validation():
@@ -103,24 +103,7 @@ def test_calibration_state_validation():
             physical_length=50.0,
             calibration_status=CalibrationStatus.PHYSICAL_CALIBRATED.value
         )
-    
-def test_demo_mode_isolation_and_fake_measurements():
-    import cv2
-    import numpy as np
-    img = np.random.randint(50, 200, (600, 800, 3), dtype=np.uint8)
-    _, encoded = cv2.imencode('.jpg', img)
-    
-    res = run_demo_inference(encoded.tobytes())
-    
-    # 8. Demo-mode isolation
-    assert res.model_version == "PIPELINE_DEMO_ONLY"
-    
-    # 9. Absence of fake physical measurements (should be PIXEL_ONLY, no mm)
-    if res.detections:
-        meas = res.detections[0].measurement
-        assert meas.calibration_status == CalibrationStatus.PIXEL_ONLY.value
-        assert meas.physical_length is None
-        assert meas.physical_width is None
+
 
 def test_cv_engineering_boundary():
     # The CV result should not have ANY fields relating to "shear failure", "safety", "repair"

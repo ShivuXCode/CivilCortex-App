@@ -1,18 +1,4 @@
-from app.core.config import settings
-from app.demo.demo_engine import get_demo_scenario
-
 def assess_risk(state: dict) -> dict:
-    # 0. Controlled Prototype / Demo Mode Execution
-    if getattr(settings, "DEMO_MODE", False):
-        scenario_id = state.get("scenario") or getattr(settings, "DEFAULT_DEMO_SCENARIO", "hairline_crack")
-        sc = get_demo_scenario(scenario_id)
-        return {
-            "risk_score": sc["risk_score"],
-            "risk_level": sc["risk_level"],
-            "is_load_bearing": state.get("is_load_bearing", True),
-            "structure_type": state.get("structure_type", "tunnel")
-        }
-
     health_score = state.get("health_score", 100)
     
     # Industry-level structural context replacing generic safety metrics

@@ -16,10 +16,14 @@ from app.core.exceptions import CivilCortexError
 from app.core.logger import logger, job_id_var
 
 # Configure Redis Connection
-redis_conn = Redis.from_url(settings.REDIS_URL)
-
-# Configure Queues
-analysis_queue = Queue('analysis', connection=redis_conn)
+redis_conn = None
+analysis_queue = None
+if settings.REDIS_URL:
+    try:
+        redis_conn = Redis.from_url(settings.REDIS_URL)
+        analysis_queue = Queue('analysis', connection=redis_conn)
+    except Exception as e:
+        logger.warning(f"Failed to connect to Redis: {e}. Worker queue will be disabled.")
 
 def run_analysis_job(job_id: str, test_db=None):
     """

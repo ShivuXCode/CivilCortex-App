@@ -19,9 +19,11 @@ from app.db.session import engine
 async def lifespan(app: FastAPI):
     # Verify database connectivity on startup
     try:
+        from app.models import Base
+        Base.metadata.create_all(bind=engine)
         with engine.connect() as conn:
             conn.execute(text("SELECT 1"))
-        logger.info("Database connectivity verified.")
+        logger.info("Database connectivity verified and schema created.")
     except Exception as e:
         logger.error(f"Failed to connect to the database on startup: {e}")
         raise RuntimeError("Startup failed: Database unreachable")

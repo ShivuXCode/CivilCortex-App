@@ -2,9 +2,11 @@ import os
 from typing import List
 from langchain_chroma import Chroma
 from langchain_google_genai import GoogleGenerativeAIEmbeddings
+from langchain_huggingface import HuggingFaceEmbeddings
 from app.schemas.ai_contract import RAGEvidence
 from app.core.logger import logger
 from app.core.exceptions import RAGError
+from app.core.config import settings
 
 class RagService:
     def __init__(self):
@@ -22,11 +24,19 @@ class RagService:
             return
 
         try:
-            embeddings = GoogleGenerativeAIEmbeddings(model="models/gemini-embedding-2")
+            logger.info("Initializing ChromaDB with HuggingFace Local Embeddings (offline)...")
+            embeddings = HuggingFaceEmbeddings(model_name="all-MiniLM-L6-v2")
             self.db = Chroma(persist_directory=self.db_path, embedding_function=embeddings)
-        except Exception as e:
-            logger.error(f"Failed to initialize ChromaDB with Google Embeddings: {e}")
-            raise RAGError(f"Failed to initialize ChromaDB with Google Embeddings: {e}")
+        except Exception as local_e:
+            logger.warning(f"Local embeddings failed ({local_e}). Attempting Gemini fallback...")
+            try:
+                if not getattr(settings, "GEMINI_API_KEY", os.environ.get("GEMINI_API_KEY")):
+                    raise ValueError("No Gemini API key available for fallback.")
+                embeddings = GoogleGenerativeAIEmbeddings(model="models/gemini-embedding-2")
+                self.db = Chroma(persist_directory=self.db_path, embedding_function=embeddings)
+            except Exception as e:
+                logger.error(f"Failed to initialize ChromaDB with any embeddings: {e}")
+                raise RAGError(f"Failed to initialize ChromaDB: {e}")
             
         self._initialized = True
 

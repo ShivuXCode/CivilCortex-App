@@ -1,16 +1,4 @@
-from app.core.config import settings
-from app.demo.demo_engine import get_demo_scenario
-
 def assess_priority(state: dict) -> dict:
-    # 0. Controlled Prototype / Demo Mode Execution
-    if getattr(settings, "DEMO_MODE", False):
-        scenario_id = state.get("scenario") or getattr(settings, "DEFAULT_DEMO_SCENARIO", "hairline_crack")
-        sc = get_demo_scenario(scenario_id)
-        return {
-            "priority": sc["priority"],
-            "days": sc["days"]
-        }
-
     risk_level = state.get("risk_level", "Low")
     delay_risk = state.get("delay_risk", "low").lower()
     

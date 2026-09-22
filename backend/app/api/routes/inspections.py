@@ -106,7 +106,12 @@ def analyze_image(
         db.refresh(job)
     
     # 3. Enqueue the task to RQ
-    analysis_queue.enqueue(run_analysis_job, job_id=str(job.id))
+    if analysis_queue:
+        analysis_queue.enqueue(run_analysis_job, job_id=str(job.id))
+    else:
+        # Run synchronously in background if Redis is disabled
+        import threading
+        threading.Thread(target=run_analysis_job, args=(str(job.id),)).start()
     
     return {"job_id": job.id, "status": job.status, "message": "Analysis job queued successfully"}
 
@@ -148,14 +153,14 @@ def get_inspection_report(
         
     assessment = db.query(Assessment).join(CrackObservation).filter(
         CrackObservation.inspection_id == inspection_id,
-        Assessment.llm_report.isnot(None)
+        Assessment.repair_recommendation.isnot(None)
     ).order_by(Assessment.created_at.desc()).first()
     
     if not assessment:
         raise HTTPException(status_code=404, detail="No report generated for this inspection yet")
         
     return {
-        "content": assessment.llm_report,
+        "content": assessment.repair_recommendation or assessment.llm_report,
         "generated_at": assessment.updated_at,
         "status": "COMPLETED"
     }

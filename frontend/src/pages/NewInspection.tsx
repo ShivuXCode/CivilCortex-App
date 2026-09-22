@@ -86,8 +86,9 @@ export const NewInspection = () => {
       });
       setInspectionId(insp.id);
       setStep(2);
-    } catch (err) {
-      console.error("Failed to start inspection");
+    } catch (err: any) {
+      console.error("Failed to start inspection", err);
+      alert("Failed to start inspection. Please check your connection or try again.");
     }
   };
 

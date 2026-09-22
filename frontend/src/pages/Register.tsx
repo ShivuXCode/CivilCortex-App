@@ -28,10 +28,12 @@ export const Register = () => {
       loginSuccess(data.access_token, data.refresh_token);
       navigate('/');
     } catch (err: any) {
-      if (err.response?.data?.detail) {
+      if (err.civilCortexMessage) {
+        setError(err.civilCortexMessage);
+      } else if (typeof err.response?.data?.detail === 'string') {
         setError(err.response.data.detail);
       } else {
-        setError('Unable to register. Please try again.');
+        setError('Unable to register. Please check your inputs and try again.');
       }
     } finally {
       setIsLoading(false);

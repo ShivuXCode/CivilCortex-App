@@ -41,15 +41,6 @@ def generate_inspection_pdf(inspection):
     pdf.add_page()
     
     report_data = inspection.full_report_json or {}
-    
-    # Check if in Demo / Prototype mode
-    is_demo = report_data.get("mode") == "demo" or "scenario_id" in report_data or "scenario" in report_data
-    if is_demo:
-        pdf.set_fill_color(240, 244, 248)
-        pdf.set_font("helvetica", "B", 9)
-        pdf.set_text_color(0, 51, 102)
-        pdf.cell(0, 7, sanitize_text("PROTOTYPE / DEMO MODE: Evaluated under controlled demonstration parameters."), border=1, align="C", fill=True, new_x="LMARGIN", new_y="NEXT")
-        pdf.ln(4)
 
     # 1. Inspection Overview
     pdf.set_font("helvetica", "B", 13)
