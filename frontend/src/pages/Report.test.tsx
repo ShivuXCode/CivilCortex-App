@@ -140,6 +140,10 @@ describe('Report component', () => {
     const severitySelect = screen.getByLabelText('Override Severity');
     fireEvent.change(severitySelect, { target: { value: 'CRITICAL' } });
 
+    // Change risk
+    const riskSelect = screen.getByLabelText('Override Risk');
+    fireEvent.change(riskSelect, { target: { value: 'REQUIRES_ENGINEER_REVIEW' } });
+
     // Change recommendation
     const textarea = screen.getByLabelText('Engineering Recommendation / Action Plan');
     fireEvent.change(textarea, { target: { value: 'Patch and monitor' } });
