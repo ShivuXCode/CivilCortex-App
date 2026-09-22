@@ -41,7 +41,6 @@ class AnalysisInput(BaseModel):
     element: ElementContext
     observation: ObservationContext
     cv_output: CVOutputContext
-    scenario: Optional[str] = Field(default="hairline_crack", description="Scenario identifier for testing")
     image_bytes: Optional[bytes] = Field(default=None, description="Raw image bytes if needed by LLMs directly")
     rag_evidence: Optional[List[RAGEvidence]] = Field(default=None, description="Structured RAG evidence retrieved before analysis")
 

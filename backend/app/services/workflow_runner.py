@@ -8,13 +8,11 @@ def run_analysis(input_data: AnalysisInput) -> AnalysisResult:
     # 1. Map AnalysisInput to AgentState
     initial_state = {
         "crack_type": input_data.observation.crack_type,
-        "severity": input_data.cv_output.metadata.model_status, # Use mock metadata or map properly later
-        "helmet_compliance": 1.0, # Not strictly in our new boundary, default it
+        "severity": "unknown", # Will be evaluated by LLM Vision
         "delay_risk": input_data.observation.delay_risk,
         "is_load_bearing": input_data.element.is_load_bearing,
         "structure_type": input_data.element.element_type,
         "image_bytes": input_data.image_bytes,
-        "scenario": input_data.scenario,
         "rag_evidence": [ev.model_dump() for ev in input_data.rag_evidence] if input_data.rag_evidence else None,
         
         # Inject CV data into LangGraph if possible (LangGraph will populate it, but we can seed it)
