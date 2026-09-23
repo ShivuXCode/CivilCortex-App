@@ -16,6 +16,7 @@ from app.services.image_service import ImageService
 from app.services.ml_service import MLService
 from app.worker import analysis_queue, run_analysis_job
 from app.core.limiter import limiter
+import magic
 
 router = APIRouter()
 
@@ -59,6 +60,13 @@ def upload_inspection_image(
     inspection = db.query(Inspection).join(Building).filter(Inspection.id == inspection_id, Building.organization_id == current_user.organization_id).first()
     if not inspection:
         raise HTTPException(status_code=403, detail="Inspection not found or access denied")
+    
+    # MIME validation using python-magic
+    header = file.file.read(2048)
+    file.file.seek(0)
+    mime_type = magic.from_buffer(header, mime=True)
+    if mime_type not in ["image/jpeg", "image/png"]:
+        raise HTTPException(status_code=400, detail="Invalid file type. Only JPEG and PNG are allowed.")
     
     image_info = ImageService.save_image(file, inspection_id)
     db_image = InspectionImage(
