@@ -57,35 +57,13 @@ TEST_IMAGE_BYTES = create_real_test_image()
 
 
 @pytest.fixture(scope="session", autouse=True)
-def e2e_mock_storage():
+def e2e_mock_rag():
     """
-    Mock MinIO storage for E2E.
-
-    Upload: returns a deterministic object key.
-    Download: writes the real test image to the destination path so that
-              the REAL ML model can process it (CV is NOT mocked).
+    Mock RAG for E2E to prevent unnecessary embedding generation.
     """
-    with patch('app.services.storage_service.StorageService.upload_file') as mock_upload, \
-         patch('app.services.storage_service.StorageService.download_file') as mock_download, \
-         patch('app.services.storage_service.StorageService.get_file_bytes') as mock_get_bytes:
-
-        mock_upload.return_value = "e2e/test_inspection_image.jpg"
-        mock_get_bytes.return_value = TEST_IMAGE_BYTES
-
-        def download_side_effect(object_key, dest_path):
-            # If key is a simulated missing file, raise StorageError
-            if "MISSING" in object_key or "NON_EXISTENT" in object_key:
-                from app.core.exceptions import StorageError
-                raise StorageError("Object not found in storage")
-            # Otherwise write the real test image — real CV will process it
-            with open(dest_path, 'wb') as f:
-                f.write(TEST_IMAGE_BYTES)
-
-        mock_download.side_effect = download_side_effect
-
-        with patch('app.services.rag_service.RagService.retrieve_evidence') as mock_rag:
-            mock_rag.return_value = []  # ChromaDB is empty — documented limitation
-            yield mock_upload
+    with patch('app.services.rag_service.RagService.retrieve_evidence') as mock_rag:
+        mock_rag.return_value = []  # ChromaDB is empty — documented limitation
+        yield mock_rag
 
 
 @pytest.fixture(scope="session", autouse=True)
