@@ -19,8 +19,25 @@ class CostEngine:
         material = db.query(Material).filter(Material.name.ilike(f"%{material_name}%")).first()
         labor = db.query(LaborRate).filter(LaborRate.category.ilike(f"%{labor_category}%")).first()
 
-        mat_rate = material.unit_rate if material else 100.0
-        lab_rate = labor.daily_rate if labor else 500.0
+        if not material or not labor:
+            return {
+                "method_name": repair_method_name,
+                "currency": "INR",
+                "status": "DATA_UNAVAILABLE",
+                "message": "Real pricing data is required. Missing material or labor rates in the database.",
+                "material_cost": None,
+                "labor_cost": None,
+                "total_range_low": "N/A",
+                "total_range_high": "N/A",
+                "details_json": {
+                    "material_requested": material_name,
+                    "labor_requested": labor_category,
+                    "overhead_contingency_assumption": "20%"
+                }
+            }
+
+        mat_rate = material.unit_rate
+        lab_rate = labor.daily_rate
 
         base_material_cost = estimated_material_quantity * mat_rate
         base_labor_cost = estimated_labor_days * lab_rate

@@ -19,7 +19,12 @@ class RiskEngine:
             "high": 60.0,
             "critical": 80.0
         }
-        base_score = severity_scores.get(severity_level.lower(), 10.0)
+        
+        normalized_severity = severity_level.lower()
+        if normalized_severity not in severity_scores:
+            raise ValueError(f"Invalid severity level: '{severity_level}'. Must be one of: low, medium, high, critical.")
+            
+        base_score = severity_scores[normalized_severity]
 
         # Element criticality multiplier
         element_multipliers = {
