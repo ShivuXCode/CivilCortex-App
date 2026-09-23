@@ -88,7 +88,10 @@ class AnalysisService:
         logger.info(f"event=analysis_stage stage=RAG status=started")
         from app.services.rag_service import rag_service
         defect_type = cv_result["defect_type"]
-        search_query = defect_type if defect_type in ["Unknown", "none"] else f"Standards, repair guidelines, and maintenance protocols for {defect_type} defects"
+        if defect_type in ["Unknown", "none"]:
+            search_query = defect_type
+        else:
+            search_query = f"Standards, repair guidelines, and safety assessment for {defect_type} in {element_context.element_type} (load-bearing: {element_context.is_load_bearing}) for {element_context.building_type} buildings."
         rag_evidence = rag_service.retrieve_evidence(search_query)
         
         # 4. Construct AnalysisInput
