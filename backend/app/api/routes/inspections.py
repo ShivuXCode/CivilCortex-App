@@ -190,7 +190,54 @@ def get_inspection_report(
         "status": inspection.status
     }
 
+from fastapi.responses import Response
+
+@router.get("/{inspection_id}/report/pdf")
+def get_inspection_report_pdf(
+    inspection_id: str,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
+    inspection = db.query(Inspection).join(Building).filter(
+        Inspection.id == inspection_id,
+        Building.organization_id == current_user.organization_id
+    ).first()
+    if not inspection:
+        raise HTTPException(status_code=403, detail="Inspection not found or access denied")
+    
+    from app.services.pdf_generator import generate_inspection_pdf
+    pdf_bytes = generate_inspection_pdf(inspection)
+    
+    return Response(
+        content=pdf_bytes,
+        media_type="application/pdf",
+        headers={"Content-Disposition": f'attachment; filename="CivilCortex_Report_{inspection_id}.pdf"'}
+    )
+
+@router.get("/{inspection_id}/report/docx")
+def get_inspection_report_docx(
+    inspection_id: str,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
+    inspection = db.query(Inspection).join(Building).filter(
+        Inspection.id == inspection_id,
+        Building.organization_id == current_user.organization_id
+    ).first()
+    if not inspection:
+        raise HTTPException(status_code=403, detail="Inspection not found or access denied")
+    
+    from app.services.docx_generator import generate_inspection_docx
+    docx_bytes = generate_inspection_docx(inspection)
+    
+    return Response(
+        content=docx_bytes,
+        media_type="application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+        headers={"Content-Disposition": f'attachment; filename="CivilCortex_Report_{inspection_id}.docx"'}
+    )
+
 from pydantic import BaseModel
+
 
 @router.post("/{inspection_id}/submit")
 def submit_inspection(

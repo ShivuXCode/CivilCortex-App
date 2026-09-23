@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import ReactMarkdown from 'react-markdown';
 import { Card, CardContent, CardHeader, CardTitle, Button } from '../components/ui';
-import { getAssessment, getReport, AssessmentResponse, ReportResponse } from '../api/inspections';
+import { getAssessment, getReport, AssessmentResponse, ReportResponse, downloadReportPDF, downloadReportDOCX } from '../api/inspections';
 import { updateAssessment } from '../api/defects';
 import { ShieldAlert, FileText, Activity, AlertTriangle, ArrowLeft, Clock } from 'lucide-react';
 import { useAuth } from '../hooks/useAuth';
@@ -178,7 +178,55 @@ export const Report = () => {
 
       <Card>
         <CardHeader className="bg-slate-50 dark:bg-slate-900/50 border-b border-slate-100">
-          <CardTitle className="text-lg">Executive Report</CardTitle>
+          <div className="flex justify-between items-center w-full">
+            <CardTitle className="text-lg">Executive Report</CardTitle>
+            <div className="relative group">
+              <Button variant="outline" size="sm" className="flex items-center gap-2">
+                Download Report
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m6 9 6 6 6-6"/></svg>
+              </Button>
+              <div className="absolute right-0 mt-2 w-48 bg-white dark:bg-slate-800 rounded-md shadow-lg border border-slate-200 dark:border-slate-700 hidden group-hover:block z-10">
+                <div className="py-1">
+                  <button
+                    className="block w-full text-left px-4 py-2 text-sm text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700"
+                    onClick={async () => {
+                      try {
+                        const blob = await downloadReportPDF(inspectionId!);
+                        const url = window.URL.createObjectURL(blob);
+                        const a = document.createElement('a');
+                        a.href = url;
+                        a.download = `CivilCortex_Report_${inspectionId}.pdf`;
+                        a.click();
+                        window.URL.revokeObjectURL(url);
+                      } catch (e) {
+                        console.error("PDF Download failed", e);
+                      }
+                    }}
+                  >
+                    Download as PDF
+                  </button>
+                  <button
+                    className="block w-full text-left px-4 py-2 text-sm text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700"
+                    onClick={async () => {
+                      try {
+                        const blob = await downloadReportDOCX(inspectionId!);
+                        const url = window.URL.createObjectURL(blob);
+                        const a = document.createElement('a');
+                        a.href = url;
+                        a.download = `CivilCortex_Report_${inspectionId}.docx`;
+                        a.click();
+                        window.URL.revokeObjectURL(url);
+                      } catch (e) {
+                        console.error("DOCX Download failed", e);
+                      }
+                    }}
+                  >
+                    Download as Word (.docx)
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
         </CardHeader>
         <CardContent className="pt-6">
           {report ? (

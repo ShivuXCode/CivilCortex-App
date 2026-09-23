@@ -1,58 +1,36 @@
-# No longer importing langchain LLM to guarantee deterministic behavior
-from typing import List
+from app.agents.state import AgentState
+from app.services.cost_engine import CostEngine
+from app.db.session import SessionLocal
+import json
 
-# Deterministic lookup table for standard civil engineering maintenance actions
-RESOURCE_DICTIONARY = {
-    "epoxy injection": {
-        "required_workers": 2,
-        "required_materials": ["Epoxy Resin", "Injection Ports", "Surface Sealant", "Air Compressor"],
-        "estimated_cost": "₹1,25,000 – ₹2,50,000"
-    },
-    "concrete reinforcement": {
-        "required_workers": 4,
-        "required_materials": ["Carbon Fiber Reinforced Polymer (CFRP)", "Epoxy Adhesive", "Scaffolding"],
-        "estimated_cost": "₹6,50,000 – ₹12,00,000"
-    },
-    "foundation underpinning": {
-        "required_workers": 6,
-        "required_materials": ["High-strength Concrete", "Steel Piers", "Hydraulic Jacks", "Excavator"],
-        "estimated_cost": "₹20,00,000 – ₹40,00,000"
-    },
-    "surface sealing": {
-        "required_workers": 2,
-        "required_materials": ["Polyurethane Sealant", "Wire Brushes", "Applicators"],
-        "estimated_cost": "₹40,000 – ₹1,00,000"
-    },
-    "spalling repair": {
-        "required_workers": 3,
-        "required_materials": ["Repair Mortar", "Anti-corrosion Coating", "Rebar"],
-        "estimated_cost": "₹1,60,000 – ₹4,00,000"
+def optimize_resources(state: AgentState) -> dict:
+    repair_method = state.get("maintenance_action", "Unknown Repair")
+    workers = state.get("required_workers", 1)
+    materials = state.get("required_materials", [])
+    
+    primary_material = materials[0] if materials else "Concrete"
+    labor_category = "General Labor"
+    if "high" in state.get("severity", "low").lower() or "critical" in state.get("severity", "low").lower():
+        labor_category = "Specialist Structural"
+
+    estimated_labor_days = float(workers * 2.0)
+    estimated_material_qty = 10.0
+
+    with SessionLocal() as db:
+        cost_data = CostEngine.estimate_repair(
+            db=db,
+            repair_method_name=repair_method,
+            estimated_material_quantity=estimated_material_qty,
+            material_name=primary_material,
+            labor_category=labor_category,
+            estimated_labor_days=estimated_labor_days
+        )
+
+    if cost_data.get("status") == "DATA_UNAVAILABLE":
+        estimated_cost_str = "DATA_UNAVAILABLE - Requires manual cost estimation"
+    else:
+        estimated_cost_str = f"{cost_data.get('currency', 'INR')} {cost_data.get('total_range_low', 'N/A')} - {cost_data.get('total_range_high', 'N/A')}"
+
+    return {
+        "estimated_cost": estimated_cost_str
     }
-}
-
-# Fallback for unknown actions
-DEFAULT_RESOURCES = {
-    "required_workers": 3,
-    "required_materials": ["Standard Assessment Tools", "General Repair Materials"],
-    "estimated_cost": "Engineer Quote Required"
-}
-
-def optimize_resources(state: dict) -> dict:
-    # Handle edge case where Agent 4 didn't find a standard
-    action = state.get("maintenance_action", "Surface Sealing").lower()
-    
-    if "manual engineer review" in action:
-        return {
-            "required_workers": 1,
-            "required_materials": ["Inspection Equipment"],
-            "estimated_cost": "TBD after manual review"
-        }
-    
-    # Simple deterministic matching
-    matched_resources = DEFAULT_RESOURCES
-    for key, res in RESOURCE_DICTIONARY.items():
-        if key in action:
-            matched_resources = res
-            break
-            
-    return matched_resources

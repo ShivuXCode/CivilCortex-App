@@ -115,3 +115,17 @@ export const generateReport = async (inspectionId: string): Promise<{status: str
   const response = await apiClient.post(`/inspections/${inspectionId}/generate-report`);
   return response.data;
 };
+
+export const downloadReportPDF = async (inspectionId: string): Promise<Blob> => {
+  const response = await apiClient.get(`/inspections/${inspectionId}/report/pdf`, {
+    responseType: 'blob'
+  });
+  return response.data;
+};
+
+export const downloadReportDOCX = async (inspectionId: string): Promise<Blob> => {
+  const response = await apiClient.get(`/inspections/${inspectionId}/report/docx`, {
+    responseType: 'blob'
+  });
+  return response.data;
+};

@@ -40,19 +40,11 @@ def generate_inspection_pdf(inspection):
     pdf.set_auto_page_break(auto=True, margin=25)
     pdf.add_page()
     
-    # Find the latest assessment
-    report_data = {}
+    assessment = None
+    observation = None
     if inspection.observations:
-        for obs in inspection.observations:
-            if obs.assessment and obs.assessment.repair_recommendation:
-                # Try parsing the string to JSON if it's stored as JSON string
-                import json
-                try:
-                    report_data = json.loads(obs.assessment.repair_recommendation)
-                except Exception:
-                    # If it's a plain string, use it directly under a generic key
-                    report_data = {"summary": obs.assessment.repair_recommendation}
-                break
+        observation = inspection.observations[0]
+        assessment = observation.assessment
 
     # 1. Inspection Overview
     pdf.set_font("helvetica", "B", 13)
@@ -63,10 +55,10 @@ def generate_inspection_pdf(inspection):
     pdf.cell(0, 5, sanitize_text(f"Inspection Record ID: #{inspection.id}"), border=False, align="L", new_x="LMARGIN", new_y="NEXT")
     pdf.cell(0, 5, sanitize_text(f"Timestamp: {inspection.created_at.strftime('%Y-%m-%d %H:%M:%S UTC')}"), border=False, align="L", new_x="LMARGIN", new_y="NEXT")
     
-    crack_type = report_data.get('crack_type', 'Unknown')
-    severity = report_data.get('severity', 'Unknown')
+    crack_type = observation.defect.defect_type if observation and observation.defect else 'Unknown'
+    severity = assessment.severity if assessment else 'Unknown'
     
-    pdf.cell(0, 5, sanitize_text(f"Target Structure: {str(report_data.get('structure_type', 'Tunnel')).capitalize()}"), border=False, align="L", new_x="LMARGIN", new_y="NEXT")
+    pdf.cell(0, 5, sanitize_text(f"Target Structure: {str(inspection.building.name if hasattr(inspection, 'building') else 'Building').capitalize()}"), border=False, align="L", new_x="LMARGIN", new_y="NEXT")
     pdf.cell(0, 5, sanitize_text(f"Identified Defect: {crack_type}"), border=False, align="L", new_x="LMARGIN", new_y="NEXT")
     pdf.cell(0, 5, sanitize_text(f"Visual Severity: {str(severity).upper()}"), border=False, align="L", new_x="LMARGIN", new_y="NEXT")
     pdf.ln(4)
@@ -76,20 +68,13 @@ def generate_inspection_pdf(inspection):
     pdf.cell(0, 8, "2. Key Telemetry & Diagnostic Metrics", border=False, align="L", new_x="LMARGIN", new_y="NEXT")
     
     pdf.set_font("helvetica", "", 10)
-    health = report_data.get("health_score", "N/A")
-    cond = report_data.get("condition", "N/A")
-    risk_score = report_data.get("risk_score", "N/A")
-    risk_lvl = report_data.get("risk_level", "N/A")
-    priority = report_data.get("priority", "N/A")
-    days = report_data.get("days", "N/A")
-    cost = report_data.get("estimated_cost", report_data.get("cost_estimate", "N/A"))
-    crew = report_data.get("required_workers", report_data.get("crew_size", "N/A"))
+    risk_score = assessment.risk_score if assessment and assessment.risk_score else "N/A"
+    risk_lvl = assessment.risk if assessment and assessment.risk else "N/A"
+    priority = assessment.priority if assessment and assessment.priority else "N/A"
     
-    pdf.cell(0, 5, sanitize_text(f"Structural Health Score: {health}/100 ({cond})"), border=False, align="L", new_x="LMARGIN", new_y="NEXT")
-    pdf.cell(0, 5, sanitize_text(f"Risk Assessment: {risk_score}/100 (Level: {str(risk_lvl).upper()})"), border=False, align="L", new_x="LMARGIN", new_y="NEXT")
-    pdf.cell(0, 5, sanitize_text(f"Intervention Priority: {priority} (Turnaround: {days} day(s))"), border=False, align="L", new_x="LMARGIN", new_y="NEXT")
-    pdf.cell(0, 5, sanitize_text(f"Estimated Remediation Cost: {cost}"), border=False, align="L", new_x="LMARGIN", new_y="NEXT")
-    pdf.cell(0, 5, sanitize_text(f"Required Workforce: {crew} technician(s) / engineer(s)"), border=False, align="L", new_x="LMARGIN", new_y="NEXT")
+    pdf.cell(0, 5, sanitize_text(f"Risk Assessment Score: {risk_score}/100"), border=False, align="L", new_x="LMARGIN", new_y="NEXT")
+    pdf.cell(0, 5, sanitize_text(f"Risk Level: {str(risk_lvl).upper().replace('_', ' ')}"), border=False, align="L", new_x="LMARGIN", new_y="NEXT")
+    pdf.cell(0, 5, sanitize_text(f"Intervention Priority: {priority}"), border=False, align="L", new_x="LMARGIN", new_y="NEXT")
     pdf.ln(4)
 
     # 3. Official Remediation Strategy & Action Plan
@@ -97,25 +82,15 @@ def generate_inspection_pdf(inspection):
     pdf.cell(0, 8, "3. Official Remediation Strategy & Recommendation", border=False, align="L", new_x="LMARGIN", new_y="NEXT")
     
     pdf.set_font("helvetica", "", 9)
-    recommendation_text = str(report_data.get("recommendation", "No recommendation generated."))
+    recommendation_text = assessment.llm_report if assessment and assessment.llm_report else (assessment.repair_recommendation if assessment and assessment.repair_recommendation else "Not available")
     
-    # Check if recommendation is a fallback JSON string
-    try:
-        import json
-        parsed_rec = json.loads(recommendation_text)
-        if isinstance(parsed_rec, dict) and "status" in parsed_rec:
-            recommendation_text = f"Status: {parsed_rec.get('status')}\nReason: {parsed_rec.get('reason')}\n\n{parsed_rec.get('details', '')}"
-    except Exception:
-        pass # Not a JSON string, which is normal for Markdown reports
-
-    # Clean markdown headers for plain PDF rendering
     cleaned_rec = recommendation_text.replace("### ", "").replace("## ", "").replace("**", "")
     pdf.multi_cell(0, 5, sanitize_text(cleaned_rec), align="L")
     pdf.ln(4)
     
     # 4. Standards Citations
-    rag_context = str(report_data.get("rag_context", ""))
-    if rag_context and rag_context != "N/A":
+    rag_context = assessment.rag_context if assessment and assessment.rag_context else "Not available"
+    if rag_context and rag_context != "Not available":
         pdf.set_font("helvetica", "B", 11)
         pdf.cell(0, 7, "4. Regulatory Standards & Compliance References:", border=False, align="L", new_x="LMARGIN", new_y="NEXT")
         pdf.set_font("helvetica", "I", 8)
