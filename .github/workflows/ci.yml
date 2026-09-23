@@ -64,6 +64,10 @@ jobs:
         ENVIRONMENT: "test"
         SECRET_KEY: "test_secret_key"
         GEMINI_API_KEY: "dummy_key_for_tests"
+        MINIO_ENDPOINT: "localhost:9000"
+        MINIO_ROOT_USER: "minioadmin"
+        MINIO_ROOT_PASSWORD: "minioadmin"
+        MINIO_SECURE: "false"
       run: |
         PYTHONPATH=. pytest tests/ -v
 

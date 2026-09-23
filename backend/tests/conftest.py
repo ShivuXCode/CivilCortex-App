@@ -26,28 +26,23 @@ engine = create_engine(
 TestingSessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 
 @pytest.fixture(scope="session", autouse=True)
-def mock_storage():
-    with patch('app.services.storage_service.StorageService.upload_file') as mock_upload, \
-         patch('app.services.storage_service.StorageService.get_file_bytes') as mock_get_bytes, \
-         patch('app.services.storage_service.StorageService.download_file') as mock_download:
+def mock_ml_model():
+    with patch('app.services.ml_service.MLService.get_model') as mock_get_model:
+        class MockModel:
+            def __call__(self, tensor):
+                import torch
+                # Create dummy logits with shape (1, 4, 384, 384)
+                logits = torch.zeros((1, 4, 384, 384), dtype=torch.float32)
+                # Let's say there is a large crack (class 1)
+                logits[0, 1, 100:200, 100:200] = 10.0
+                return logits
+            def eval(self):
+                pass
+            def to(self, device):
+                pass
         
-        mock_upload.return_value = "mock_object_key"
-        mock_get_bytes.return_value = b"mock_data"
-        
-        def mock_download_side_effect(object_key, file_path):
-            if object_key.startswith("/tmp/non-existent-file-404"):
-                from app.core.exceptions import StorageError
-                raise StorageError("missing on disk")
-            import cv2
-            import numpy as np
-            dummy_img = np.zeros((10, 10, 3), dtype=np.uint8)
-            cv2.imwrite(file_path, dummy_img)
-            
-        mock_download.side_effect = mock_download_side_effect
-        
-        with patch('app.services.rag_service.RagService.retrieve_evidence') as mock_rag:
-            mock_rag.return_value = []
-            yield mock_upload
+        mock_get_model.return_value = MockModel()
+        yield mock_get_model
 
 @pytest.fixture(scope="session", autouse=True)
 def mock_redis_queue():
