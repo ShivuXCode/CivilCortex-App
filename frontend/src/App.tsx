@@ -39,7 +39,7 @@ const Placeholder = ({ title }: { title: string }) => (
 import { Register } from './pages/Register';
 import { Team } from './pages/Team';
 import { Settings } from './pages/Settings';
-import { useTheme } from './hooks/useTheme';
+import { ThemeProvider, useTheme } from './contexts/ThemeContext';
 
 function AppRoutes() {
   useTheme();
@@ -78,10 +78,12 @@ function AppRoutes() {
 
 export default function App() {
   return (
-    <AuthProvider>
-      <BrowserRouter>
-        <AppRoutes />
-      </BrowserRouter>
-    </AuthProvider>
+    <ThemeProvider>
+      <AuthProvider>
+        <BrowserRouter>
+          <AppRoutes />
+        </BrowserRouter>
+      </AuthProvider>
+    </ThemeProvider>
   );
 }

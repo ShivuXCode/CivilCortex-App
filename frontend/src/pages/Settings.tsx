@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useAuth } from '../hooks/useAuth';
-import { useTheme } from '../hooks/useTheme';
+import { useTheme } from '../contexts/ThemeContext';
 import { Settings as SettingsIcon, User, Lock, Moon, Sun, Monitor } from 'lucide-react';
 import { cn } from '../components/ui';
 
@@ -50,7 +50,8 @@ export const Settings = () => {
         },
         body: JSON.stringify({
           current_password: currentPassword,
-          new_password: newPassword
+          new_password: newPassword,
+          confirm_password: confirmPassword
         })
       });
 
