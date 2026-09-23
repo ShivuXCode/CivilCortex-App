@@ -68,7 +68,8 @@ def test_download_nonexistent_file():
         temp_path = tmp.name
         
     try:
-        with pytest.raises(RuntimeError) as exc_info:
+        from app.core.exceptions import StorageError
+        with pytest.raises(StorageError) as exc_info:
             storage_service.download_file("nonexistent/file.jpg", temp_path)
         assert "Failed to download from storage" in str(exc_info.value)
     finally:
