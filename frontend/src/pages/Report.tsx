@@ -8,6 +8,97 @@ import { ShieldAlert, FileText, Activity, AlertTriangle, ArrowLeft, Clock } from
 import { useAuth } from '../hooks/useAuth';
 import { AuditHistoryModal } from '../components/AuditHistoryModal';
 
+const RAGEvidenceFormatter = ({ evidenceText }: { evidenceText: string }) => {
+  if (!evidenceText) return null;
+  const sources = evidenceText.split('Source: ').filter(Boolean);
+  
+  return (
+    <div className="space-y-6">
+      {sources.map((sourceBlock, idx) => {
+        const firstNewlineIndex = sourceBlock.indexOf('\n');
+        let sourceName = sourceBlock.trim();
+        let content = '';
+
+        if (firstNewlineIndex !== -1) {
+          sourceName = sourceBlock.substring(0, firstNewlineIndex).trim();
+          content = sourceBlock.substring(firstNewlineIndex + 1).trim();
+        }
+
+        const regex = /(MBI\s+Figure\s+[\d.]+|Figure\s+[\d.]+|Chapter\s+\d+|Section\s+[\d.]+|Page\s+\d+|•)/gi;
+        const tokens = content.split(regex);
+        
+        const elements: { id: number; type: string; text: string }[] = [];
+        
+        tokens.forEach((t) => {
+          if (!t) return;
+          const isBullet = t === '•';
+          const isFigure = /^(MBI\s+)?Figure\s+[\d.]+/i.test(t);
+          const isMeta = /^(Chapter\s+\d+|Section\s+[\d.]+|Page\s+\d+)/i.test(t);
+          
+          if (isBullet) {
+            elements.push({ id: elements.length, type: 'bullet', text: '' });
+          } else if (isFigure) {
+            elements.push({ id: elements.length, type: 'figure', text: t.trim() });
+          } else if (isMeta) {
+            elements.push({ id: elements.length, type: 'meta', text: t.trim() });
+          } else {
+            const text = t.trim();
+            if (!text) return;
+            
+            const last = elements[elements.length - 1];
+            if (last && last.type === 'bullet' && !last.text) {
+              last.text = text;
+            } else {
+              elements.push({ id: elements.length, type: 'text', text });
+            }
+          }
+        });
+
+        return (
+          <div key={idx} className="evidence-container bg-white dark:bg-slate-900 rounded-lg border border-slate-200 dark:border-slate-700 overflow-hidden shadow-sm">
+            <div className="bg-slate-50 dark:bg-slate-800 px-4 py-3 border-b border-slate-200 dark:border-slate-700">
+              <h4 className="font-medium text-slate-800 dark:text-slate-200 flex items-center gap-2 text-sm">
+                <FileText className="h-4 w-4 text-slate-500" />
+                Source: <span className="font-mono text-xs bg-slate-200 dark:bg-slate-700 px-2 py-1 rounded text-slate-700 dark:text-slate-300">{sourceName}</span>
+              </h4>
+            </div>
+            
+            <div className="p-4 space-y-3">
+              {elements.map((el) => {
+                if (el.type === 'bullet') {
+                  return (
+                    <ul key={el.id} className="evidence-list list-disc list-outside ml-5 text-sm text-slate-700 dark:text-slate-300">
+                      <li className="evidence-item">{el.text}</li>
+                    </ul>
+                  );
+                }
+                
+                if (el.type === 'meta') {
+                  return (
+                    <div key={el.id} className="metadata-section text-xs font-semibold tracking-wide text-indigo-600 dark:text-indigo-400 uppercase mb-1">
+                      {el.text}
+                    </div>
+                  );
+                }
+                
+                if (el.type === 'figure') {
+                  return (
+                    <div key={el.id} className="italic text-sm text-slate-500 dark:text-slate-400 my-2 bg-slate-50 dark:bg-slate-800/50 px-3 py-2 rounded border border-slate-100 dark:border-slate-700 inline-block">
+                      {el.text}
+                    </div>
+                  );
+                }
+                
+                return <p key={el.id} className="text-sm text-slate-700 dark:text-slate-300 leading-relaxed">{el.text}</p>;
+              })}
+            </div>
+          </div>
+        );
+      })}
+    </div>
+  );
+};
+
 export const Report = () => {
   const { user } = useAuth();
   const { id: inspectionId } = useParams<{ id: string }>();
@@ -167,9 +258,7 @@ export const Report = () => {
         </CardHeader>
         <CardContent className="pt-6">
           {assessment.rag_context ? (
-            <div className="prose prose-sm prose-slate max-w-none">
-              <ReactMarkdown>{assessment.rag_context}</ReactMarkdown>
-            </div>
+            <RAGEvidenceFormatter evidenceText={assessment.rag_context} />
           ) : (
             <p className="text-slate-600 dark:text-slate-400 italic">No relevant regulatory evidence was retrieved.</p>
           )}
@@ -185,8 +274,8 @@ export const Report = () => {
                 Download Report
                 <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m6 9 6 6 6-6"/></svg>
               </Button>
-              <div className="absolute right-0 mt-2 w-48 bg-white dark:bg-slate-800 rounded-md shadow-lg border border-slate-200 dark:border-slate-700 hidden group-hover:block z-10">
-                <div className="py-1">
+              <div className="absolute right-0 pt-2 w-48 hidden group-hover:block group-focus-within:block z-50">
+                <div className="bg-white dark:bg-slate-800 rounded-md shadow-lg border border-slate-200 dark:border-slate-700 py-1">
                   <button
                     className="block w-full text-left px-4 py-2 text-sm text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700"
                     onClick={async () => {

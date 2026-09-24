@@ -8,7 +8,7 @@ def run_analysis(input_data: AnalysisInput) -> AnalysisResult:
     # 1. Map AnalysisInput to AgentState
     initial_state = {
         "crack_type": input_data.observation.crack_type,
-        "severity": "unknown", # Will be evaluated by LLM Vision
+        "severity": "REQUIRES_REVIEW",  # Must be overwritten by Agent 1 with a real evaluation
         "delay_risk": input_data.observation.delay_risk,
         "is_load_bearing": input_data.element.is_load_bearing,
         "structure_type": input_data.element.element_type,

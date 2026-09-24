@@ -2,7 +2,7 @@ from fastapi import APIRouter, Depends, HTTPException, Request
 from fastapi.security import OAuth2PasswordRequestForm
 from sqlalchemy.orm import Session
 from app.db.session import get_db
-from app.api.deps import get_current_user, get_admin_user, oauth2_scheme, RoleChecker
+from app.api.deps import get_current_user, oauth2_scheme
 from app.models import User
 from app.schemas.user import UserCreate, UserResponse, Token, TokenData
 from app.services.auth_service import AuthService
@@ -51,7 +51,7 @@ class UserPublic(BaseModel):
 @router.get("/users", response_model=list[UserPublic])
 def get_org_users(
     db: Session = Depends(get_db),
-    current_user: User = Depends(get_admin_user)
+    current_user: User = Depends(get_current_user)
 ):
     users = db.query(User).filter(User.organization_id == current_user.organization_id).all()
     return users
@@ -204,7 +204,7 @@ def update_user_role(
     user_id: str, 
     data: UserRoleUpdate, 
     db: Session = Depends(get_db), 
-    current_user: User = Depends(RoleChecker(["ADMIN"]))
+    current_user: User = Depends(get_current_user)
 ):
     if data.role not in ["INSPECTOR", "ENGINEER", "ADMIN"]:
         raise HTTPException(status_code=400, detail="Invalid role")

@@ -2,7 +2,7 @@ from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.orm import Session, joinedload
 from typing import List
 from app.db.session import get_db
-from app.api.deps import get_current_user, RoleChecker
+from app.api.deps import get_current_user
 from app.models import User, Defect, StructuralElement, CrackObservation, InspectionImage, Assessment, Building, Floor, Area, Inspection
 from app.schemas.defect import (
     DefectCreate, DefectResponse, DefectUpdate,
@@ -112,7 +112,7 @@ def update_assessment(
     assessment_id: str,
     assessment_update: app.schemas.defect.AssessmentUpdate,
     db: Session = Depends(get_db),
-    current_user: User = Depends(RoleChecker(["ENGINEER", "ADMIN"]))
+    current_user: User = Depends(get_current_user)
 ):
     assessment = db.query(Assessment).options(
         joinedload(Assessment.observation).joinedload(CrackObservation.defect).joinedload(Defect.structural_element).joinedload(StructuralElement.area).joinedload(Area.floor).joinedload(Floor.building),

@@ -2,7 +2,7 @@ from fastapi import APIRouter, Depends, HTTPException, UploadFile, File, Request
 from sqlalchemy.orm import Session
 from typing import List
 from app.db.session import get_db
-from app.api.deps import get_current_user, get_inspector_user, get_engineer_user, get_admin_user
+from app.api.deps import get_current_user 
 from app.models import User, Inspection, Building, InspectionImage
 from app.models.analysis import AnalysisJob
 from app.schemas.inspection import (
@@ -21,7 +21,7 @@ import magic
 router = APIRouter()
 
 @router.post("/", response_model=InspectionResponse)
-def create_inspection(inspection: InspectionCreate, db: Session = Depends(get_db), current_user: User = Depends(get_inspector_user)):
+def create_inspection(inspection: InspectionCreate, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
     building = db.query(Building).filter(Building.id == inspection.building_id, Building.organization_id == current_user.organization_id).first()
     if not building:
         raise HTTPException(status_code=403, detail="Building not found or access denied")
@@ -32,22 +32,9 @@ def create_inspection(inspection: InspectionCreate, db: Session = Depends(get_db
     db.refresh(db_obj)
     return db_obj
 
-from app.api.deps import ENFORCE_RBAC
-
 @router.get("/", response_model=List[InspectionResponse])
 def get_inspections(skip: int = Query(default=0, ge=0), limit: int = Query(default=100, ge=1, le=100), db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
     query = db.query(Inspection).join(Building).filter(Building.organization_id == current_user.organization_id)
-    
-    if ENFORCE_RBAC:
-        if current_user.role == "INSPECTOR":
-            query = query.filter(Inspection.inspector_id == current_user.id)
-        elif current_user.role == "ENGINEER":
-            # Engineers see what is assigned to them, or anything that is pending assignment (for a queue view)
-            query = query.filter(or_(
-                Inspection.assigned_engineer_id == current_user.id,
-                Inspection.status.in_(["SUBMITTED", "AI_ANALYSIS", "ASSESSMENT_READY"])
-            ))
-    
     return query.offset(skip).limit(limit).all()
 
 @router.post("/{inspection_id}/images", response_model=InspectionImageResponse)
@@ -243,7 +230,7 @@ from pydantic import BaseModel
 def submit_inspection(
     inspection_id: str,
     db: Session = Depends(get_db),
-    current_user: User = Depends(get_inspector_user)
+    current_user: User = Depends(get_current_user)
 ):
     inspection = db.query(Inspection).join(Building).filter(
         Inspection.id == inspection_id,
@@ -265,7 +252,7 @@ def submit_inspection(
 def begin_review(
     inspection_id: str,
     db: Session = Depends(get_db),
-    current_user: User = Depends(get_engineer_user)
+    current_user: User = Depends(get_current_user)
 ):
     inspection = db.query(Inspection).join(Building).filter(
         Inspection.id == inspection_id,
@@ -289,7 +276,7 @@ def request_revision(
     inspection_id: str,
     data: RevisionRequest,
     db: Session = Depends(get_db),
-    current_user: User = Depends(get_engineer_user)
+    current_user: User = Depends(get_current_user)
 ):
     inspection = db.query(Inspection).join(Building).filter(
         Inspection.id == inspection_id,
@@ -310,7 +297,7 @@ def request_revision(
 def approve_inspection(
     inspection_id: str,
     db: Session = Depends(get_db),
-    current_user: User = Depends(get_engineer_user)
+    current_user: User = Depends(get_current_user)
 ):
     inspection = db.query(Inspection).join(Building).filter(
         Inspection.id == inspection_id,
@@ -329,7 +316,7 @@ def approve_inspection(
 def generate_report_retry(
     inspection_id: str,
     db: Session = Depends(get_db),
-    current_user: User = Depends(get_engineer_user)
+    current_user: User = Depends(get_current_user)
 ):
     inspection = db.query(Inspection).join(Building).filter(
         Inspection.id == inspection_id,

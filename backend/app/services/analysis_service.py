@@ -160,7 +160,7 @@ class AnalysisService:
 
             assessment = Assessment(
                 observation_id=observation.id,
-                severity=ai_result.severity if ai_result.severity else "UNKNOWN",
+                severity=ai_result.severity if ai_result.severity else "REQUIRES_REVIEW",
                 risk=ai_result.risk_level if ai_result.risk_level else "REQUIRES_REVIEW",
                 priority=ai_result.priority,
                 rag_context=rag_context_text,
