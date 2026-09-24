@@ -1,5 +1,5 @@
 from app.agents.state import AgentState
-from langchain_google_genai import ChatGoogleGenerativeAI
+from langchain_groq import ChatGroq
 from app.core.logger import logger
 
 def generate_recommendation(state: AgentState) -> dict:
@@ -27,7 +27,7 @@ def generate_recommendation(state: AgentState) -> dict:
         context_str += f"Source: {source}\n{text}\n\n"
         
     try:
-        llm = ChatGoogleGenerativeAI(model="gemini-3.6-flash", temperature=0.1)
+        llm = ChatGroq(model="llama3-8b-8192", temperature=0.1)
         
         prompt = f"""
 Act as a Civil Engineering Assistant.
@@ -57,10 +57,7 @@ Instructions:
         
     except Exception as e:
         logger.error(f"Agent 6: LLM invocation failed: {e}")
-        return {
-            "rag_context": "INSUFFICIENT_EVIDENCE",
-            "recommendation": f"REQUIRES_REVIEW: LLM processing failed ({str(e)})."
-        }
+        raise e
         
     return {
         "rag_context": context_str.strip(),

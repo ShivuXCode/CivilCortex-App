@@ -20,7 +20,7 @@ services:
     restart: always
 
   minio:
-    image: quay.io/minio/minio
+    image: elestio/minio:latest
     ports:
       - "9000:9000"
       - "9001:9001"
@@ -42,6 +42,7 @@ services:
       - ./backend/chroma_db:/app/chroma_db
     environment:
       - GEMINI_API_KEY=${GEMINI_API_KEY}
+      - GROQ_API_KEY=${GROQ_API_KEY}
       - DATABASE_URL=${DATABASE_URL}
       - REDIS_URL=${REDIS_URL}
       - SECRET_KEY=${SECRET_KEY}
@@ -75,7 +76,7 @@ services:
       context: ./frontend
       dockerfile: Dockerfile
     ports:
-      - "8080:80"
+      - "8082:80"
     depends_on:
       - backend
     restart: always

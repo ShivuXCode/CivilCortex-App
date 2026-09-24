@@ -4,10 +4,7 @@ import numpy as np
 import torch
 from pathlib import Path
 from PIL import Image
-
-import segmentation_models_pytorch as smp
-import albumentations as A
-from albumentations.pytorch import ToTensorV2
+from skimage.morphology import skeletonize
 
 from app.core.exceptions import ImageProcessingError, CVInferenceError
 from app.core.logger import logger
@@ -31,7 +28,7 @@ class MLService:
                 f"ML model file not found at '{_MODEL_PATH}'. "
                 "Place 'Phase6_ArchDeepLabEff_best.pth' in backend/models/ to enable real inference."
             )
-            raise CVInferenceError(f"ML model file not found at '{_MODEL_PATH}'")
+            return None
 
         try:
             cls._model = smp.DeepLabV3Plus(
@@ -51,11 +48,39 @@ class MLService:
 
     @staticmethod
     def get_preprocessing(resolution=384):
+        import albumentations as A
+        from albumentations.pytorch import ToTensorV2
         return A.Compose([
             A.Resize(resolution, resolution),
             A.Normalize(mean=(0.485, 0.456, 0.406), std=(0.229, 0.224, 0.225)),
             ToTensorV2()
         ])
+
+    @staticmethod
+    def extract_aruco_scale(image_path: str, known_marker_size_mm: float = 50.0) -> float:
+        """Returns mm_per_pixel of the original image if an ArUco marker is found, else None"""
+        img = cv2.imread(image_path)
+        if img is None: return None
+        gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+        try:
+            aruco_dict = cv2.aruco.getPredefinedDictionary(cv2.aruco.DICT_4X4_50)
+            parameters = cv2.aruco.DetectorParameters()
+            detector = cv2.aruco.ArucoDetector(aruco_dict, parameters)
+            corners, ids, rejected = detector.detectMarkers(gray)
+        except AttributeError:
+            aruco_dict = cv2.aruco.Dictionary_get(cv2.aruco.DICT_4X4_50)
+            parameters = cv2.aruco.DetectorParameters_create()
+            corners, ids, rejected = cv2.aruco.detectMarkers(gray, aruco_dict, parameters=parameters)
+            
+        if ids is not None and len(corners) > 0:
+            c = corners[0][0]
+            width_top = np.linalg.norm(c[0] - c[1])
+            width_bottom = np.linalg.norm(c[3] - c[2])
+            height_left = np.linalg.norm(c[0] - c[3])
+            height_right = np.linalg.norm(c[1] - c[2])
+            avg_pixel_size = (width_top + width_bottom + height_left + height_right) / 4.0
+            return known_marker_size_mm / avg_pixel_size
+        return None
 
     @staticmethod
     def analyze_image(image_path: str) -> dict:
@@ -68,7 +93,40 @@ class MLService:
 
         model = MLService.get_model()
 
+        # --- 1. Scale Calibration (ArUco) ---
+        original_img = cv2.imread(image_path)
+        orig_height, orig_width = original_img.shape[:2]
+        
+        orig_mm_per_pixel = MLService.extract_aruco_scale(image_path)
+        calibration_method = "ArUco Marker (50mm)" if orig_mm_per_pixel else "None (Uncalibrated)"
+        
+        mask_mm_per_pixel = None
+        if orig_mm_per_pixel:
+            scale_x = orig_width / 384.0
+            scale_y = orig_height / 384.0
+            avg_scale = (scale_x + scale_y) / 2.0
+            mask_mm_per_pixel = orig_mm_per_pixel * avg_scale
+
         # --- Graceful fallback when model file is absent ---
+        if model is None:
+            logger.info("Using DEMO MODE inference because model weights are missing.")
+            
+            return {
+                "defect_type": "crack",
+                "confidence": 0.94,
+                "mask_coverage": 0.12,
+                "component_count": 3,
+                "largest_component_area": 4500,
+                "length_mm": 124.6 if mask_mm_per_pixel else None,
+                "min_width_mm": 0.8 if mask_mm_per_pixel else None,
+                "avg_width_mm": 2.1 if mask_mm_per_pixel else None,
+                "max_width_mm": 3.7 if mask_mm_per_pixel else None,
+                "calibration_method": calibration_method,
+                "model_name": "civilcortex_deeplabv3plus (DEMO)",
+                "model_version": "v2.0",
+                "model_status": "DEMO"
+            }
+
         # --- Real model inference ---
         try:
             image = np.array(Image.open(image_path).convert("RGB"))
@@ -95,6 +153,7 @@ class MLService:
             best_mask_coverage = 0.0
             best_component_count = 0
             best_largest_area = 0
+            best_binary_mask = None
 
             # Analyze each defect class independently
             for class_idx, class_name in DEFECT_CLASSES.items():
@@ -113,19 +172,35 @@ class MLService:
                     continue
                     
                 component_count = len(valid_components)
-                largest_area = int(max(valid_components))
-                mask_coverage = float(np.sum(binary_mask) / total_pixels)
-                
-                # Confidence score based on largest area ratio (as in the original code)
-                defect_score = float(largest_area / total_pixels)
-                
-                # Select the dominant defect type (largest area)
+                largest_stat = max([s for i, s in enumerate(stats) if i > 0 and s[cv2.CC_STAT_AREA] >= MIN_AREA_THRESHOLD], key=lambda s: s[cv2.CC_STAT_AREA])
+                largest_area = int(largest_stat[cv2.CC_STAT_AREA])
                 if largest_area > best_largest_area:
                     best_defect_type = class_name
                     best_confidence = defect_score
                     best_mask_coverage = mask_coverage
                     best_component_count = component_count
                     best_largest_area = largest_area
+                    largest_label = [i for i, s in enumerate(stats) if i > 0 and s[cv2.CC_STAT_AREA] == largest_area][0]
+                    best_binary_mask = (labels == largest_label).astype(np.uint8)
+
+            length_mm = None
+            min_width_mm = None
+            avg_width_mm = None
+            max_width_mm = None
+            
+            if best_binary_mask is not None and mask_mm_per_pixel is not None:
+                # Geometry Pipeline (Skeletonization & Distance Transform)
+                skeleton = skeletonize(best_binary_mask)
+                length_mm = round(np.sum(skeleton) * mask_mm_per_pixel, 2)
+                
+                dist_transform = cv2.distanceTransform(best_binary_mask, cv2.DIST_L2, 5)
+                skeleton_widths = dist_transform[skeleton] * 2.0
+                
+                valid_widths = skeleton_widths[skeleton_widths > 0]
+                if len(valid_widths) > 0:
+                    min_width_mm = round(np.min(valid_widths) * mask_mm_per_pixel, 2)
+                    avg_width_mm = round(np.mean(valid_widths) * mask_mm_per_pixel, 2)
+                    max_width_mm = round(np.max(valid_widths) * mask_mm_per_pixel, 2)
 
             return {
                 "defect_type": best_defect_type,
@@ -133,6 +208,11 @@ class MLService:
                 "mask_coverage": best_mask_coverage,
                 "component_count": best_component_count,
                 "largest_component_area": best_largest_area,
+                "length_mm": length_mm,
+                "min_width_mm": min_width_mm,
+                "avg_width_mm": avg_width_mm,
+                "max_width_mm": max_width_mm,
+                "calibration_method": calibration_method,
                 "model_name": "civilcortex_deeplabv3plus",
                 "model_version": "v2.0",
                 "model_status": "PRODUCTION"

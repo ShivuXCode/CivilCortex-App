@@ -11,7 +11,7 @@ RUN npm install
 COPY . .
 
 # Build the React/Vite app with correct API URL
-RUN VITE_API_BASE_URL=/api/v1 npm run build
+RUN VITE_API_BASE_URL=/api npm run build
 
 # Serve stage
 FROM nginx:alpine

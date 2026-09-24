@@ -3,7 +3,7 @@ from fastapi import FastAPI, Request
 from fastapi.responses import JSONResponse
 from fastapi.middleware.cors import CORSMiddleware
 from app.core.config import settings
-from app.api.routes import auth, hierarchy, inspections, defects, analysis
+from app.api.routes import analyses
 from app.core.logger import logger, request_id_var
 from app.core.exceptions import CivilCortexError
 
@@ -19,7 +19,8 @@ from app.db.session import engine
 async def lifespan(app: FastAPI):
     # Verify database connectivity on startup
     try:
-        from app.models import Base
+        from app.models.analysis import Analysis
+        from app.db.base import Base
         Base.metadata.create_all(bind=engine)
         with engine.connect() as conn:
             conn.execute(text("SELECT 1"))
@@ -35,7 +36,6 @@ async def lifespan(app: FastAPI):
         while True:
             # Run every 5 minutes
             await asyncio.sleep(300)
-            # Run in a threadpool to avoid blocking the async event loop with sync SQLAlchemy queries
             await asyncio.to_thread(reap_stale_jobs)
 
     reaper_task = asyncio.create_task(periodic_reaper())
@@ -64,33 +64,9 @@ async def request_id_middleware(request: Request, call_next):
 @app.exception_handler(CivilCortexError)
 async def civil_cortex_exception_handler(request: Request, exc: CivilCortexError):
     logger.warning(f"Domain error {exc.code}: {exc.message}")
-    
-    # Map domain errors to HTTP status codes
-    status_mapping = {
-        "VALIDATION_ERROR": 400,
-        "AUTHENTICATION_ERROR": 401,
-        "AUTHORIZATION_ERROR": 403,
-        "NOT_FOUND": 404,
-        "STORAGE_ERROR": 500,
-        "IMAGE_PROCESSING_ERROR": 400,
-        "CV_INFERENCE_ERROR": 500,
-        "RAG_ERROR": 500,
-        "LLM_ERROR": 500,
-        "DATABASE_ERROR": 500,
-        "QUEUE_ERROR": 500,
-        "INTERNAL_ERROR": 500,
-    }
-    status_code = status_mapping.get(exc.code, 500)
-    
     return JSONResponse(
-        status_code=status_code,
-        content={
-            "error": {
-                "code": exc.code,
-                "message": exc.message,
-                "request_id": request_id_var.get()
-            }
-        }
+        status_code=500,
+        content={"error": {"code": exc.code, "message": exc.message, "request_id": request_id_var.get()}}
     )
 
 @app.exception_handler(Exception)
@@ -98,35 +74,19 @@ async def unhandled_exception_handler(request: Request, exc: Exception):
     logger.error(f"Unhandled exception: {str(exc)}", exc_info=True)
     return JSONResponse(
         status_code=500,
-        content={
-            "error": {
-                "code": "INTERNAL_ERROR",
-                "message": "An unexpected error occurred.",
-                "request_id": request_id_var.get()
-            }
-        }
+        content={"error": {"code": "INTERNAL_ERROR", "message": "An unexpected error occurred.", "request_id": request_id_var.get()}}
     )
 
-# CORS — scoped to only the methods and headers the frontend actually uses.
-# Using allow_methods=["*"] and allow_headers=["*"] in production is a security
-# risk as it allows arbitrary cross-origin requests with any method or header.
-is_production = settings.ENVIRONMENT == "production"
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=settings.BACKEND_CORS_ORIGINS,
+    allow_origins=["*"],
     allow_credentials=True,
-    # In production, restrict to only the methods the API actually exposes.
-    allow_methods=["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"] if is_production else ["*"],
-    # In production, restrict to only the headers the frontend sends.
-    allow_headers=["Authorization", "Content-Type", "Accept", "X-Request-ID"] if is_production else ["*"],
+    allow_methods=["*"],
+    allow_headers=["*"],
 )
 
 # Include Routers
-app.include_router(auth.router, prefix=f"{settings.API_V1_STR}/auth", tags=["auth"])
-app.include_router(hierarchy.router, prefix=f"{settings.API_V1_STR}", tags=["hierarchy"])
-app.include_router(inspections.router, prefix=f"{settings.API_V1_STR}/inspections", tags=["inspections"])
-app.include_router(defects.router, prefix=f"{settings.API_V1_STR}/defects", tags=["defects"])
-app.include_router(analysis.router, prefix=f"{settings.API_V1_STR}/analysis", tags=["analysis"])
+app.include_router(analyses.router, prefix=f"{settings.API_V1_STR}/analyses", tags=["analyses"])
 
 @app.get("/")
 def root():

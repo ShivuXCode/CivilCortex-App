@@ -1,16 +1,15 @@
 import os
+import sys
 from datetime import datetime, timezone
 from redis import Redis
 from rq import Queue
-import sys
 
 # Ensure backend directory is in the python path for absolute imports
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from app.core.config import settings
 from app.db.session import SessionLocal
-from app.models.analysis import AnalysisJob
-from app.models.inspection import InspectionImage, Inspection
+from app.models.analysis import Analysis
 from app.services.analysis_service import AnalysisService
 from app.core.exceptions import CivilCortexError
 from app.core.logger import logger, job_id_var
@@ -25,82 +24,44 @@ if settings.REDIS_URL:
     except Exception as e:
         logger.warning(f"Failed to connect to Redis: {e}. Worker queue will be disabled.")
 
-def run_analysis_job(job_id: str, test_db=None):
-    """
-    Background task to run the AI analysis workflow via RQ.
-    """
-    job_id_var.set(job_id)
-    logger.info(f"Worker picked up job {job_id}")
+def run_analysis_job(analysis_id: str, test_db=None):
+    job_id_var.set(analysis_id)
+    logger.info(f"Worker picked up analysis {analysis_id}")
     
     db = test_db if test_db else SessionLocal()
     try:
-        job = db.query(AnalysisJob).filter(AnalysisJob.id == job_id).first()
-        if not job:
-            logger.error(f"AnalysisJob {job_id} not found in database.")
+        analysis = db.query(Analysis).filter(Analysis.id == analysis_id).first()
+        if not analysis:
+            logger.error(f"Analysis {analysis_id} not found in database.")
             return
             
-        # Idempotency check: if job is already processing or completed, skip it
-        if job.status in ["PROCESSING", "COMPLETED"]:
-            logger.info(f"AnalysisJob {job_id} is already in state {job.status}. Skipping duplicate execution.")
+        if analysis.status in ["COMPLETED"]:
+            logger.info(f"Analysis {analysis_id} is already COMPLETED. Skipping.")
             return
             
-        # Transition to PROCESSING
-        job.status = "PROCESSING"
-        job.started_at = datetime.now(timezone.utc)
+        analysis.status = "PROCESSING"
         db.commit()
         
-        # Verify related image exists
-        image = db.query(InspectionImage).filter(InspectionImage.id == job.image_id).first()
-        if not image:
-            job.status = "FAILED"
-            job.error_message = "NOT_FOUND"
-            job.completed_at = datetime.now(timezone.utc)
-            db.commit()
-            return
-            
-        # Fetch inspection ID (needed by AnalysisService)
-        inspection = db.query(Inspection).filter(Inspection.id == image.inspection_id).first()
-        if not inspection:
-            job.status = "FAILED"
-            job.error_message = "NOT_FOUND"
-            job.completed_at = datetime.now(timezone.utc)
-            db.commit()
-            return
-            
-        inspection.status = "AI_ANALYSIS"
-        db.commit()
-        
-        # Execute the AnalysisService
         try:
-            # We use the existing synchronous logic from Phase 6, but in a background worker context
-            # It already persists the result internally.
-            result = AnalysisService.run_synchronous_analysis(
-                image_id=str(image.id),
-                inspection_id=str(inspection.id),
-                db=db,
-                user_id=inspection.inspector_id
-            )
+            # Run the ML & AI Analysis pipeline
+            AnalysisService.run_analysis_pipeline(analysis, db)
             
-            # Transition to COMPLETED
-            job.status = "COMPLETED"
-            job.completed_at = datetime.now(timezone.utc)
-            inspection.status = "ASSESSMENT_READY"
+            analysis.status = "COMPLETED"
+            analysis.completed_at = datetime.now(timezone.utc)
             db.commit()
-            logger.info(f"Job {job_id} completed successfully.")
+            logger.info(f"Analysis {analysis_id} completed successfully.")
             
         except CivilCortexError as e:
-            logger.error(f"Domain error during analysis execution for job {job_id}: {e.code} - {e.message}")
-            job.status = "FAILED"
-            job.error_message = e.code
-            job.completed_at = datetime.now(timezone.utc)
-            inspection.status = "FAILED"
+            logger.error(f"Domain error during analysis {analysis_id}: {e.code} - {e.message}")
+            analysis.status = "FAILED"
+            analysis.error_message = e.message
+            analysis.completed_at = datetime.now(timezone.utc)
             db.commit()
         except Exception as e:
-            logger.error(f"Unexpected error during analysis execution for job {job_id}: {str(e)}")
-            job.status = "FAILED"
-            job.error_message = "INTERNAL_ERROR"
-            job.completed_at = datetime.now(timezone.utc)
-            inspection.status = "FAILED"
+            logger.error(f"Unexpected error during analysis {analysis_id}: {str(e)}")
+            analysis.status = "FAILED"
+            analysis.error_message = "INTERNAL_ERROR"
+            analysis.completed_at = datetime.now(timezone.utc)
             db.commit()
             
     finally:
@@ -109,21 +70,17 @@ def run_analysis_job(job_id: str, test_db=None):
         job_id_var.set("")
 
 def reap_stale_jobs():
-    """
-    Find any AnalysisJob stuck in PROCESSING state for more than 10 minutes and mark it FAILED.
-    """
     from datetime import timedelta
     db = SessionLocal()
     try:
         ten_minutes_ago = datetime.now(timezone.utc) - timedelta(minutes=10)
-        stale_jobs = db.query(AnalysisJob).filter(
-            AnalysisJob.status == "PROCESSING",
-            AnalysisJob.started_at < ten_minutes_ago
+        stale_jobs = db.query(Analysis).filter(
+            Analysis.status == "PROCESSING",
+            Analysis.created_at < ten_minutes_ago
         ).all()
         
         count = 0
         for job in stale_jobs:
-            logger.warning(f"Reaping stale job {job.id} that has been processing since {job.started_at}")
             job.status = "FAILED"
             job.error_message = "WORKER_TIMEOUT"
             job.completed_at = datetime.now(timezone.utc)
@@ -131,8 +88,8 @@ def reap_stale_jobs():
             
         if count > 0:
             db.commit()
-            logger.info(f"Reaped {count} stale jobs.")
+            logger.info(f"Reaped {count} stale analyses.")
     except Exception as e:
-        logger.error(f"Error while reaping stale jobs: {e}", exc_info=True)
+        logger.error(f"Error while reaping stale analyses: {e}", exc_info=True)
     finally:
         db.close()

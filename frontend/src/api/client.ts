@@ -1,89 +1,44 @@
-import axios from 'axios';
+export const API_URL = import.meta.env.VITE_API_BASE_URL || "http://localhost:8001/api";
 
-export const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000/api';
+export async function fetchAnalyses() {
+    const res = await fetch(`${API_URL}/analyses`);
+    if (!res.ok) throw new Error("Failed to fetch analyses");
+    return res.json();
+}
 
-export const apiClient = axios.create({
-  baseURL: API_BASE_URL,
-  headers: {
-    'Content-Type': 'application/json',
-  },
-});
+export async function fetchAnalysis(id: string) {
+    const res = await fetch(`${API_URL}/analyses/${id}`);
+    if (!res.ok) throw new Error("Failed to fetch analysis");
+    return res.json();
+}
 
-// Request interceptor to add the auth token
-apiClient.interceptors.request.use(
-  (config) => {
-    const token = localStorage.getItem('civilcortex_token');
-    if (token) {
-      config.headers.Authorization = `Bearer ${token}`;
-    }
-    return config;
-  },
-  (error) => Promise.reject(error)
-);
+export async function uploadAnalysis(file: File, title: string, description: string = "") {
+    const formData = new FormData();
+    formData.append("file", file);
+    formData.append("title", title);
+    if (description) formData.append("description", description);
 
-// Response interceptor to handle unauthenticated sessions and standardize errors
-apiClient.interceptors.response.use(
-  (response) => response,
-  async (error) => {
-    const originalRequest = error.config;
+    const res = await fetch(`${API_URL}/analyses`, {
+        method: "POST",
+        body: formData,
+    });
     
-    // Check if it's an unauthenticated error and we haven't retried yet
-    if (error.response?.status === 401 && !originalRequest._retry) {
-      originalRequest._retry = true;
-      const refreshTokenValue = localStorage.getItem('civilcortex_refresh_token');
-      
-      if (refreshTokenValue) {
-        try {
-          // Use axios directly to avoid interceptor loops
-          const response = await axios.post(`${API_BASE_URL}/auth/refresh`, {
-            refresh_token: refreshTokenValue
-          });
-          
-          if (response.data?.access_token) {
-            localStorage.setItem('civilcortex_token', response.data.access_token);
-            if (response.data.refresh_token) {
-              localStorage.setItem('civilcortex_refresh_token', response.data.refresh_token);
-            }
-            originalRequest.headers.Authorization = `Bearer ${response.data.access_token}`;
-            return apiClient(originalRequest);
-          }
-        } catch (refreshError) {
-          // Refresh failed, fall through to logout
-          console.error("Token refresh failed", refreshError);
-        }
-      }
-      
-      // If no refresh token or refresh failed, logout
-      localStorage.removeItem('civilcortex_token');
-      localStorage.removeItem('civilcortex_refresh_token');
-      if (window.location.pathname !== '/login' && window.location.pathname !== '/register') {
-        window.location.href = '/login';
-      }
+    if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        throw new Error(err.detail || "Failed to upload analysis");
     }
-
-    // Standardize error message extraction from our new error taxonomy
-    let errorMessage = 'An unexpected error occurred';
-    let errorCode = 'UNKNOWN_ERROR';
     
-    if (error.response?.data?.error) {
-      errorMessage = error.response.data.error.message || errorMessage;
-      errorCode = error.response.data.error.code || errorCode;
-    } else if (error.response?.data?.detail) {
-      // Fallback for FastAPI default HTTPExceptions
-      if (typeof error.response.data.detail === 'string') {
-        errorMessage = error.response.data.detail;
-      } else if (Array.isArray(error.response.data.detail)) {
-        errorMessage = error.response.data.detail[0]?.msg || errorMessage;
-        errorCode = 'VALIDATION_ERROR';
-      }
-    } else if (error.message) {
-      errorMessage = error.message;
-    }
+    return res.json();
+}
 
-    // Enhance the error object so consumers can easily access it
-    error.civilCortexMessage = errorMessage;
-    error.civilCortexCode = errorCode;
+export async function deleteAnalysis(id: string) {
+    const res = await fetch(`${API_URL}/analyses/${id}`, {
+        method: "DELETE"
+    });
+    if (!res.ok) throw new Error("Failed to delete analysis");
+    return res.json();
+}
 
-    return Promise.reject(error);
-  }
-);
+export function getImageUrl(objectKey: string) {
+    return `${API_URL}/analyses/image/${objectKey}`;
+}
